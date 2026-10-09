@@ -122,10 +122,10 @@
 
     <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:0 20px 6px;">Health</div>
     <ul style="list-style:none;padding:0 10px;">
-      <li><a href="#" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📈</span> Health Score</a></li>
-      <li><a href="#" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>🏥</span> Family Graph</a></li>
-      <li><a href="#" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📋</span> Reports</a></li>
-      <li><a href="#" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>⚙️</span> Settings</a></li>
+      <li><a href="#overview" onclick="showToast('Health Score section — scroll to overview', 'info')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📈</span> Health Score</a></li>
+      <li><a href="#" onclick="showToast('Family Health Graph — coming soon in next update 🔜', 'info');return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>🏥</span> Family Graph</a></li>
+      <li><a href="#" onclick="openReports();return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📋</span> Reports</a></li>
+      <li><a href="#" onclick="openSettings();return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>⚙️</span> Settings</a></li>
     </ul>
 
     <div style="padding:14px 16px;margin:16px 10px 0;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.25);border-radius:10px;">
@@ -146,7 +146,7 @@
           <p style="font-size:13px;color:var(--muted);">Your health agents have been monitoring since 6:00 AM · Last updated 2 min ago</p>
         </div>
         <div style="display:flex;gap:10px;">
-          <button onclick="HS.showToast('Report generated and sent to Dr. Sharma', 'success')" class="btn btn-outline btn-sm">📄 Weekly Report</button>
+          <button onclick="showToast('📄 Weekly report generated and sent to Dr. Sharma!', 'success')" class="btn btn-outline btn-sm">📄 Weekly Report</button>
           <button onclick="triggerHITL()" class="btn btn-warning btn-sm">⚠ 1 Approval Pending</button>
         </div>
       </div>
@@ -425,25 +425,103 @@
 
 <script src="../js/main.js"></script>
 <script>
+  // ── Safe wrapper — works even before main.js loads ──
+  function showToast(msg, type) {
+    if (window.HS && HS.showToast) { HS.showToast(msg, type); return; }
+    // Fallback if HS not ready
+    const d = document.createElement('div');
+    d.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#0d1526;border:1px solid #4f8ef7;color:#e8edf5;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;';
+    d.textContent = msg;
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 3000);
+  }
+
+  // ── Settings modal ──
+  function openSettings() {
+    const modal = document.createElement('div');
+    modal.id = 'settings-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(5,9,20,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;';
+    modal.innerHTML = `
+      <div style="background:#0d1526;border:1px solid #1e2d4a;border-radius:18px;padding:32px;max-width:460px;width:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+          <div style="font-size:17px;font-weight:800;">⚙️ Settings</div>
+          <button onclick="document.getElementById('settings-modal').remove()" style="background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="padding:14px;background:#111d35;border:1px solid #1e2d4a;border-radius:10px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🔔 Notification Preferences</div>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6b7fa3;cursor:pointer;"><input type="checkbox" checked style="accent-color:#4f8ef7;width:15px;height:15px;"> Medication reminders (WhatsApp)</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6b7fa3;cursor:pointer;margin-top:8px;"><input type="checkbox" checked style="accent-color:#4f8ef7;width:15px;height:15px;"> Weekly health report to doctor</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6b7fa3;cursor:pointer;margin-top:8px;"><input type="checkbox" style="accent-color:#4f8ef7;width:15px;height:15px;"> Emergency alert to family</label>
+          </div>
+          <div style="padding:14px;background:#111d35;border:1px solid #1e2d4a;border-radius:10px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🔒 Privacy & Data</div>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6b7fa3;cursor:pointer;"><input type="checkbox" checked style="accent-color:#4f8ef7;width:15px;height:15px;"> Store health history in AI memory</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6b7fa3;cursor:pointer;margin-top:8px;"><input type="checkbox" style="accent-color:#4f8ef7;width:15px;height:15px;"> Share anonymized data for research</label>
+          </div>
+          <div style="padding:14px;background:#111d35;border:1px solid #1e2d4a;border-radius:10px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🌐 Language</div>
+            <select style="width:100%;background:#0e1a2e;border:1px solid #1e2d4a;color:#e8edf5;padding:8px 12px;border-radius:8px;font-size:13px;">
+              <option>English</option>
+              <option>Hindi (हिंदी)</option>
+              <option>Tamil (தமிழ்)</option>
+              <option>Telugu (తెలుగు)</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="document.getElementById('settings-modal').remove();showToast('Settings saved ✓', 'success')" style="width:100%;margin-top:18px;padding:12px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;">Save Settings</button>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+
+  // ── Reports modal ──
+  function openReports() {
+    const modal = document.createElement('div');
+    modal.id = 'reports-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(5,9,20,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;';
+    modal.innerHTML = `
+      <div style="background:#0d1526;border:1px solid #1e2d4a;border-radius:18px;padding:32px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+          <div style="font-size:17px;font-weight:800;">📋 My Health Reports</div>
+          <button onclick="document.getElementById('reports-modal').remove()" style="background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+        ${[
+          {title:'Weekly Summary — 14 Jan 2025', tag:'Latest', color:'#00d4b4', desc:'BP stable. Diabetes risk 78%. Medication adherence 92%.'},
+          {title:'Weekly Summary — 7 Jan 2025',  tag:'Sent',   color:'#4f8ef7', desc:'BP slightly elevated. Glucose 118 mg/dL. Risk increasing.'},
+          {title:'Monthly Report — Dec 2024',    tag:'PDF',    color:'#7c5cd8', desc:'Full health overview. Doctor reviewed and approved.'},
+        ].map(r => `
+          <div style="padding:14px 16px;background:#0e1a2e;border:1px solid #1e2d4a;border-radius:12px;margin-bottom:10px;display:flex;align-items:center;gap:14px;">
+            <span style="font-size:24px;">📄</span>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:700;">${r.title}</div>
+              <div style="font-size:12px;color:#6b7fa3;margin-top:2px;">${r.desc}</div>
+            </div>
+            <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;background:rgba(0,0,0,0.3);color:${r.color};">${r.tag}</span>
+          </div>`).join('')}
+        <button onclick="document.getElementById('reports-modal').remove();showToast('Latest report downloaded ✓', 'success')" style="width:100%;margin-top:8px;padding:12px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;">📥 Download Latest Report</button>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+
   function triggerHITL() {
-    HS.showApprovalModal({
-      title: 'Book Appointment with Dr. Priya Sharma',
-      description: 'AI has identified a <strong style="color:#f7794f;">78% diabetes risk</strong> based on your recent symptoms. Dr. Priya Sharma (Endocrinologist) is available tomorrow at <strong>10:00 AM</strong> — 2.3km from your location. Shall I confirm this booking and send you a reminder?',
-      onYes: () => {
-        HS.showToast('✓ Appointment booked! Dr. Sharma — Tomorrow 10 AM. Reminder set.', 'success');
-        document.getElementById('hitl-chat-msg').innerHTML = `
-          <div style="font-size:11px;color:#00d4b4;font-weight:700;margin-bottom:6px;">✓ Approved — Automation Running</div>
-          <div style="font-size:13px;color:var(--muted);">Appointment booked with Dr. Sharma for tomorrow 10 AM. WhatsApp reminder set for 9 AM. Doctor has been notified with your health report.</div>
-        `;
-      },
-      onNo: () => {
-        HS.showToast('Appointment cancelled. AI will not proceed.', 'info');
-      }
-    });
+    if (window.HS && HS.showApprovalModal) {
+      HS.showApprovalModal({
+        title: 'Book Appointment with Dr. Priya Sharma',
+        description: 'AI has identified a <strong style="color:#f7794f;">78% diabetes risk</strong> based on your recent symptoms. Dr. Priya Sharma (Endocrinologist) is available tomorrow at <strong>10:00 AM</strong> — 2.3km from your location. Shall I confirm this booking and send you a reminder?',
+        onYes: () => {
+          showToast('✓ Appointment booked! Dr. Sharma — Tomorrow 10 AM. Reminder set.', 'success');
+          document.getElementById('hitl-chat-msg').innerHTML = `
+            <div style="font-size:11px;color:#00d4b4;font-weight:700;margin-bottom:6px;">✓ Approved — Automation Running</div>
+            <div style="font-size:13px;color:var(--muted);">Appointment booked with Dr. Sharma for tomorrow 10 AM. WhatsApp reminder set for 9 AM. Doctor has been notified with your health report.</div>
+          `;
+        },
+        onNo: () => { showToast('Appointment cancelled. AI will not proceed.', 'info'); }
+      });
+    }
   }
 
   function approveBooking() {
-    HS.showToast('✓ Appointment booked! Dr. Sharma — Tomorrow 10 AM.', 'success');
+    showToast('✓ Appointment booked! Dr. Sharma — Tomorrow 10 AM.', 'success');
     document.getElementById('hitl-chat-msg').innerHTML = `
       <div style="font-size:11px;color:#00d4b4;font-weight:700;margin-bottom:6px;">✓ Approved</div>
       <div style="font-size:13px;color:var(--muted);">Done! Appointment confirmed. Reminder will be sent tomorrow at 9 AM.</div>
@@ -452,7 +530,7 @@
   }
 
   function rejectBooking() {
-    HS.showToast('Understood. Appointment not booked.', 'info');
+    showToast('Understood. Appointment not booked.', 'info');
     document.getElementById('hitl-chat-msg').innerHTML = `
       <div style="font-size:13px;color:var(--muted);">No problem — I will not book the appointment. Let me know when you are ready.</div>
     `;

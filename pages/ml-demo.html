@@ -255,7 +255,7 @@
               <div id="ai-recommendation" style="font-size:13px;color:var(--muted);margin-bottom:12px;"></div>
               <div style="display:flex;gap:8px;">
                 <button onclick="approveAction()" style="flex:1;padding:10px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">✓ Yes, Proceed</button>
-                <button onclick="window.HS && HS.showToast('Action cancelled. No data shared.', 'info')" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer;">✗ No Thanks</button>
+                <button onclick="mlToast('Action cancelled. No data shared.', 'info')" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer;">✗ No Thanks</button>
               </div>
             </div>
 
@@ -569,22 +569,38 @@
     document.getElementById('pct-' + id).style.color = color;
   }
 
+  // ── Safe toast for ML demo ──
+  function mlToast(msg, type) {
+    if (window.HS && HS.showToast) { HS.showToast(msg, type); return; }
+    const d = document.createElement('div');
+    d.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#0d1526;border:1px solid #4f8ef7;color:#e8edf5;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;transition:opacity 0.3s;';
+    d.textContent = msg;
+    document.body.appendChild(d);
+    setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 400); }, 3000);
+  }
+
   function approveAction() {
-    window.HS && HS.showApprovalModal({
-      title: 'Confirm AI Recommendation',
-      description: document.getElementById('ai-recommendation').innerHTML,
-      onYes: () => { window.HS && HS.showToast('Done! Action confirmed and scheduled.', 'success'); },
-      onNo:  () => { window.HS && HS.showToast('Cancelled. No action taken.', 'info'); }
-    });
+    if (window.HS && HS.showApprovalModal) {
+      HS.showApprovalModal({
+        title: 'Confirm AI Recommendation',
+        description: document.getElementById('ai-recommendation').innerHTML,
+        onYes: () => mlToast('✓ Done! Action confirmed and scheduled.', 'success'),
+        onNo:  () => mlToast('Cancelled. No action taken.', 'info')
+      });
+    } else {
+      mlToast('✓ Action approved and scheduled!', 'success');
+    }
   }
 
   function resetDemo() {
     selectedSymptoms.clear();
     document.querySelectorAll('.symptom-chip').forEach(c => c.classList.remove('selected'));
-    document.getElementById('result-output').style.display = 'none';
+    document.getElementById('result-output').style.display    = 'none';
+    document.getElementById('result-loading').style.display   = 'none';
     document.getElementById('result-placeholder').style.display = 'block';
     ['glucose','bp','age'].forEach(id => { document.getElementById(id).value = ''; });
     document.getElementById('family').value = 'none';
+    mlToast('Reset done — try a new prediction!', 'info');
   }
 </script>
 </body>

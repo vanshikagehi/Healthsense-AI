@@ -96,8 +96,8 @@
       <li><a href="#alerts"   style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>🚨</span> Alerts <span style="margin-left:auto;background:rgba(239,68,68,0.2);color:#ef4444;font-size:10px;padding:1px 7px;border-radius:10px;">3</span></a></li>
       <li><a href="#analytics" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📊</span> Analytics</a></li>
       <li><a href="#reports"   style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📋</span> AI Reports</a></li>
-      <li><a href="#"          style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📅</span> Appointments</a></li>
-      <li><a href="#"          style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>⚙️</span> Settings</a></li>
+      <li><a href="#" onclick="showDrToast('📅 Appointments view coming soon', 'info');return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📅</span> Appointments</a></li>
+      <li><a href="#" onclick="openDrSettings();return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>⚙️</span> Settings</a></li>
     </ul>
 
     <div style="padding:14px 16px;margin:8px 10px 0;background:rgba(0,212,180,0.06);border:1px solid rgba(0,212,180,0.2);border-radius:10px;">
@@ -171,7 +171,7 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
           <button onclick="window.HS && HS.showToast('Message sent to Rahul Mehta', 'success')" class="btn btn-warning btn-sm">Send Message</button>
-          <button class="btn btn-outline btn-sm">View Trend</button>
+          <button onclick="showDrToast('📈 BP trend chart opened for Rahul Mehta', 'info')" class="btn btn-outline btn-sm">View Trend</button>
         </div>
       </div>
 
@@ -184,7 +184,7 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
           <button onclick="window.HS && HS.showToast('Check-in message sent to Sneha', 'success')" class="btn btn-primary btn-sm">Schedule Check-in</button>
-          <button class="btn btn-outline btn-sm">View Details</button>
+          <button onclick="showDrToast('🧘 Mental health details opened for Sneha Patel', 'info')" class="btn btn-outline btn-sm">View Details</button>
         </div>
       </div>
     </section>
@@ -295,7 +295,7 @@
       </div>
 
       <div style="padding:12px 18px;background:var(--surface2);border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;font-size:12px;color:var(--muted);">
-        Showing 5 of 18 patients · <a href="#" style="color:var(--accent);">View all →</a>
+        Showing 5 of 18 patients · <a href="#" onclick="showDrToast('Loading all 18 patients...', 'info');return false;" style="color:var(--accent);">View all →</a>
       </div>
     </section>
 
@@ -405,6 +405,48 @@
 
 <script src="../js/main.js"></script>
 <script>
+  // ── Safe toast wrapper ──
+  function showDrToast(msg, type) {
+    if (window.HS && HS.showToast) { HS.showToast(msg, type); return; }
+    const d = document.createElement('div');
+    d.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#0d1526;border:1px solid #4f8ef7;color:#e8edf5;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;';
+    d.textContent = msg;
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 3000);
+  }
+
+  // ── Doctor Settings modal ──
+  function openDrSettings() {
+    const m = document.createElement('div');
+    m.id = 'dr-settings-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(5,9,20,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;';
+    m.innerHTML = `
+      <div style="background:#0d1526;border:1px solid #1e2d4a;border-radius:18px;padding:32px;max-width:460px;width:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+          <div style="font-size:17px;font-weight:800;">⚙️ Doctor Settings</div>
+          <button onclick="document.getElementById('dr-settings-modal').remove()" style="background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="padding:14px;background:#111d35;border:1px solid #1e2d4a;border-radius:10px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px;">🔔 Alert Preferences</div>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6b7fa3;cursor:pointer;"><input type="checkbox" checked style="accent-color:#4f8ef7;width:15px;height:15px;"> High-risk patient instant alerts</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6b7fa3;cursor:pointer;margin-top:8px;"><input type="checkbox" checked style="accent-color:#4f8ef7;width:15px;height:15px;"> Weekly AI-generated patient reports</label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6b7fa3;cursor:pointer;margin-top:8px;"><input type="checkbox" style="accent-color:#4f8ef7;width:15px;height:15px;"> Medication non-adherence alerts</label>
+          </div>
+          <div style="padding:14px;background:#111d35;border:1px solid #1e2d4a;border-radius:10px;">
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px;">📊 Report Format</div>
+            <select style="width:100%;background:#0e1a2e;border:1px solid #1e2d4a;color:#e8edf5;padding:8px 12px;border-radius:8px;font-size:13px;">
+              <option>PDF Summary</option>
+              <option>Detailed HTML Report</option>
+              <option>Quick SMS/WhatsApp</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="document.getElementById('dr-settings-modal').remove();showDrToast('Doctor settings saved ✓', 'success')" style="width:100%;margin-top:18px;padding:12px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;">Save Settings</button>
+      </div>`;
+    document.body.appendChild(m);
+  }
+
   function openPatientDetail(name, risk) {
     const modal = document.getElementById('patient-modal');
     const riskColor = risk > 65 ? '#ef4444' : risk > 40 ? '#f59e0b' : '#00d4b4';
