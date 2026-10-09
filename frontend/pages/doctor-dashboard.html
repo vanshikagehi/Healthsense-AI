@@ -24,6 +24,11 @@
     .risk-medium { background: rgba(245,158,11,0.15); color: #f59e0b; }
     .risk-low    { background: rgba(0,212,180,0.15);  color: #00d4b4; }
 
+    /* ── Sidebar nav active state ── */
+    .nav-item { color: var(--muted); transition: color 0.15s, background 0.15s; }
+    .nav-item:hover { color: var(--text) !important; background: rgba(79,142,247,0.06); }
+    .nav-item.active-nav { color: var(--accent) !important; background: rgba(79,142,247,0.1); font-weight: 600; }
+
     .alert-item {
       display: flex; gap: 14px; align-items: flex-start;
       padding: 14px 16px;
@@ -51,10 +56,11 @@
     <div class="nav-logo-text">Health<span>Sense</span> AI</div>
   </a>
   <ul class="nav-links">
-    <li><a href="#patients" class="active">Patients</a></li>
-    <li><a href="#alerts">Alerts</a></li>
-    <li><a href="#analytics">Analytics</a></li>
-    <li><a href="#reports">Reports</a></li>
+    <li><a href="#patients"     onclick="navTo('patients');return false;"     class="active">Patients</a></li>
+    <li><a href="#alerts"       onclick="navTo('alerts');return false;"                    >Alerts</a></li>
+    <li><a href="#analytics"    onclick="navTo('analytics');return false;"                >Analytics</a></li>
+    <li><a href="#reports"      onclick="navTo('reports');return false;"                  >Reports</a></li>
+    <li><a href="#appointments" onclick="navTo('appointments');return false;"             >Appointments</a></li>
   </ul>
   <div style="display:flex;gap:10px;align-items:center;">
     <a href="patient-dashboard.html" class="btn btn-outline btn-sm">Switch: Patient View</a>
@@ -91,13 +97,13 @@
     </div>
 
     <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:0 20px 6px;">Navigation</div>
-    <ul style="list-style:none;padding:0 10px;margin-bottom:16px;">
-      <li><a href="#patients" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--accent);background:rgba(79,142,247,0.1);font-size:13px;font-weight:600;"><span>👥</span> All Patients</a></li>
-      <li><a href="#alerts"   style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>🚨</span> Alerts <span style="margin-left:auto;background:rgba(239,68,68,0.2);color:#ef4444;font-size:10px;padding:1px 7px;border-radius:10px;">3</span></a></li>
-      <li><a href="#analytics" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📊</span> Analytics</a></li>
-      <li><a href="#reports"   style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📋</span> AI Reports</a></li>
-      <li><a href="#appointments" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📅</span> Appointments</a></li>
-      <li><a href="#" onclick="openDrSettings();return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>⚙️</span> Settings</a></li>
+    <ul style="list-style:none;padding:0 10px;margin-bottom:16px;" id="sidebar-nav">
+      <li><a href="#patients"     class="nav-item active-nav" onclick="navTo('patients',this);return false;"     style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;font-weight:600;text-decoration:none;"><span>👥</span> All Patients</a></li>
+      <li><a href="#alerts"       class="nav-item" onclick="navTo('alerts',this);return false;"       style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;text-decoration:none;"><span>🚨</span> Alerts <span style="margin-left:auto;background:rgba(239,68,68,0.2);color:#ef4444;font-size:10px;padding:1px 7px;border-radius:10px;">3</span></a></li>
+      <li><a href="#analytics"    class="nav-item" onclick="navTo('analytics',this);return false;"    style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;text-decoration:none;"><span>📊</span> Analytics</a></li>
+      <li><a href="#reports"      class="nav-item" onclick="navTo('reports',this);return false;"      style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;text-decoration:none;"><span>📋</span> AI Reports</a></li>
+      <li><a href="#appointments" class="nav-item" onclick="navTo('appointments',this);return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;text-decoration:none;"><span>📅</span> Appointments</a></li>
+      <li><a href="#" onclick="openDrSettings();return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;text-decoration:none;"><span>⚙️</span> Settings</a></li>
     </ul>
 
     <div style="padding:14px 16px;margin:8px 10px 0;background:rgba(0,212,180,0.06);border:1px solid rgba(0,212,180,0.2);border-radius:10px;">
@@ -107,7 +113,7 @@
   </aside>
 
   <!-- MAIN -->
-  <main style="padding:28px;overflow-y:auto;">
+  <main id="dr-main" style="padding:28px;overflow-y:auto;">
 
     <!-- Header -->
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
@@ -116,8 +122,8 @@
         <p style="font-size:13px;color:var(--muted);">AI agents have flagged 3 urgent cases today · Last updated 4 min ago</p>
       </div>
       <div style="display:flex;gap:10px;">
-        <button onclick="window.HS && HS.showToast('All patient reports sent via email', 'success')" class="btn btn-outline btn-sm">📤 Send All Reports</button>
-        <button class="btn btn-primary btn-sm">+ Add Patient</button>
+        <button onclick="showDrToast('All patient reports sent via email ✓','success')" class="btn btn-outline btn-sm">📤 Send All Reports</button>
+        <button onclick="openAddPatientModal()" class="btn btn-primary btn-sm">+ Add Patient</button>
       </div>
     </div>
 
@@ -565,10 +571,107 @@
   function showDrToast(msg, type) {
     if (window.HS && HS.showToast) { HS.showToast(msg, type); return; }
     const d = document.createElement('div');
-    d.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#0d1526;border:1px solid #4f8ef7;color:#e8edf5;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;';
+    const colors = { success:'#00d4b4', info:'#4f8ef7', error:'#ef4444' };
+    d.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;background:#0d1526;border:1px solid ${colors[type]||'#4f8ef7'};color:#e8edf5;padding:14px 20px;border-radius:12px;font-size:13px;font-weight:600;transition:opacity 0.3s;`;
     d.textContent = msg;
     document.body.appendChild(d);
-    setTimeout(() => d.remove(), 3000);
+    setTimeout(() => { d.style.opacity='0'; setTimeout(()=>d.remove(),300); }, 2700);
+  }
+
+  // ── Navigation: scroll inside <main> + update active states ──
+  const SECTIONS = ['patients','alerts','analytics','reports','appointments'];
+
+  function navTo(id, sidebarEl) {
+    const main = document.getElementById('dr-main');
+    const target = document.getElementById(id);
+    if (!target || !main) return;
+
+    // Smooth scroll inside the main panel
+    main.scrollTo({ top: target.offsetTop - 16, behavior: 'smooth' });
+
+    // Update sidebar active
+    document.querySelectorAll('#sidebar-nav .nav-item').forEach(a => a.classList.remove('active-nav'));
+    // If called from sidebar link directly
+    if (sidebarEl) sidebarEl.classList.add('active-nav');
+    else {
+      // Called from navbar — find matching sidebar link
+      const match = document.querySelector(`#sidebar-nav a[href="#${id}"]`);
+      if (match) match.classList.add('active-nav');
+    }
+
+    // Update top navbar active
+    document.querySelectorAll('.nav-links a').forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+    });
+  }
+
+  // ── Scroll-spy: highlight sidebar as user scrolls ──
+  (function() {
+    const main = document.getElementById('dr-main');
+    if (!main) return;
+    main.addEventListener('scroll', () => {
+      let current = SECTIONS[0];
+      SECTIONS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.offsetTop - 40 <= main.scrollTop) current = id;
+      });
+      document.querySelectorAll('#sidebar-nav .nav-item').forEach(a => {
+        const isActive = a.getAttribute('href') === '#' + current;
+        a.classList.toggle('active-nav', isActive);
+      });
+      document.querySelectorAll('.nav-links a').forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+      });
+    }, { passive: true });
+  })();
+
+  // ── Add Patient Modal ──
+  function openAddPatientModal() {
+    const m = document.createElement('div');
+    m.id = 'add-patient-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(5,9,20,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;';
+    m.innerHTML = `
+      <div style="background:#0d1526;border:1px solid #1e2d4a;border-radius:18px;padding:32px;max-width:460px;width:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+          <div style="font-size:17px;font-weight:800;">➕ Add New Patient</div>
+          <button onclick="document.getElementById('add-patient-modal').remove()" style="background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.5px;">FULL NAME</label>
+            <input id="np-name" type="text" placeholder="Patient full name" style="width:100%;margin-top:5px;background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;padding:10px 13px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;"/>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.5px;">AGE</label>
+              <input id="np-age" type="number" placeholder="Age" min="1" max="120" style="width:100%;margin-top:5px;background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;padding:10px 13px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.5px;">CONDITION</label>
+              <select id="np-cond" style="width:100%;margin-top:5px;background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;padding:10px 13px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;">
+                <option>Diabetes Monitoring</option>
+                <option>Hypertension</option>
+                <option>Mental Health</option>
+                <option>BP + Cholesterol</option>
+                <option>General Checkup</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.5px;">PHONE / EMAIL</label>
+            <input id="np-contact" type="text" placeholder="+91 98765 43210" style="width:100%;margin-top:5px;background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;padding:10px 13px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;"/>
+          </div>
+        </div>
+        <button onclick="submitAddPatient()" style="width:100%;margin-top:18px;padding:12px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;">Add Patient</button>
+      </div>`;
+    document.body.appendChild(m);
+  }
+
+  function submitAddPatient() {
+    const name = document.getElementById('np-name').value.trim();
+    if (!name) { showDrToast('Please enter patient name', 'error'); return; }
+    document.getElementById('add-patient-modal').remove();
+    showDrToast('Patient ' + name + ' added successfully ✓', 'success');
   }
 
   // ── Appointments ──
