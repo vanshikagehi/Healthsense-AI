@@ -571,6 +571,21 @@
         },
         onNo: () => { showToast('Appointment cancelled. AI will not proceed.', 'info'); }
       });
+    } else {
+      // Fallback inline modal if main.js not loaded
+      const m = document.createElement('div');
+      m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(5,9,20,0.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;';
+      m.innerHTML = `
+        <div style="background:#0d1526;border:1px solid #1e2d4a;border-radius:18px;padding:28px;max-width:420px;width:100%;">
+          <div style="font-size:11px;color:#f59e0b;font-weight:700;letter-spacing:1px;margin-bottom:10px;">🤖 AI RECOMMENDATION — APPROVAL NEEDED</div>
+          <div style="font-size:16px;font-weight:800;margin-bottom:12px;">Book Appointment with Dr. Priya Sharma</div>
+          <div style="font-size:13px;color:#6b7fa3;line-height:1.7;margin-bottom:20px;">AI has identified a <strong style="color:#f7794f;">78% diabetes risk</strong>. Dr. Priya Sharma (Endocrinologist) is available tomorrow at <strong style="color:#e8edf5;">10:00 AM</strong> — 2.3km from you. Confirm booking?</div>
+          <div style="display:flex;gap:10px;">
+            <button onclick="this.closest('div[style*=inset]').remove();approveBooking();" style="flex:1;padding:11px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">✓ Haan, Book karo</button>
+            <button onclick="this.closest('div[style*=inset]').remove();showToast('Appointment cancelled.','info');" style="flex:1;padding:11px;background:transparent;border:1px solid #1e2d4a;color:#e8edf5;border-radius:9px;font-size:13px;cursor:pointer;">✗ Abhi nahi</button>
+          </div>
+        </div>`;
+      document.body.appendChild(m);
     }
   }
 
