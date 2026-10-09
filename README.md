@@ -133,16 +133,6 @@ ENVIRONMENT=development
 
 ---
 
-## 🚀 Deploy on Render
-
-1. Push this repo to GitHub
-2. Go to [render.com](https://render.com) → New → Blueprint
-3. Connect your GitHub repo
-4. Render auto-detects `render.yaml` and deploys both frontend + backend
-5. Add environment variables in Render Dashboard → Environment
-
----
-
 ## 📊 ML Model Details
 
 - **Training data:** 2,400 synthetic patient records (600 per class)
