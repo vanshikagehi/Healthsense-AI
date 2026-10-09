@@ -122,8 +122,8 @@
 
     <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:0 20px 6px;">Health</div>
     <ul style="list-style:none;padding:0 10px;">
-      <li><a href="#overview" onclick="showToast('Health Score section — scroll to overview', 'info')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📈</span> Health Score</a></li>
-      <li><a href="#" onclick="showToast('Family Health Graph — coming soon in next update 🔜', 'info');return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>🏥</span> Family Graph</a></li>
+      <li><a href="#overview" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📈</span> Health Score</a></li>
+      <li><a href="#" onclick="openFamilyGraph();return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>🏥</span> Family Graph</a></li>
       <li><a href="#" onclick="openReports();return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📋</span> Reports</a></li>
       <li><a href="#" onclick="openSettings();return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>⚙️</span> Settings</a></li>
     </ul>
@@ -380,42 +380,96 @@
       </div>
     </section>
 
+    <!-- ── SECTION: AUTOMATION STATUS ── -->
+    <section id="automation" style="margin-bottom:36px;">
+      <div style="font-size:18px;font-weight:800;margin-bottom:18px;">🔄 Automation Status <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px;">All running automatically</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+        <div style="background:var(--card);border:1px solid rgba(0,212,180,0.3);border-radius:12px;padding:18px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="font-size:20px;">⏰</span>
+            <div style="font-size:13px;font-weight:700;">Medication Reminders</div>
+            <span class="pulse-anim" style="color:#00d4b4;margin-left:auto;font-size:10px;">● ACTIVE</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Next reminder: Metformin 500mg at 9:00 PM tonight via WhatsApp</div>
+          <div style="height:4px;background:var(--surface2);border-radius:2px;"><div style="width:72%;height:100%;background:#00d4b4;border-radius:2px;"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">92% adherence this week</div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(79,142,247,0.3);border-radius:12px;padding:18px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="font-size:20px;">📊</span>
+            <div style="font-size:13px;font-weight:700;">Weekly Report</div>
+            <span class="pulse-anim" style="color:#4f8ef7;margin-left:auto;font-size:10px;">● SCHEDULED</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Auto-generated every Sunday 9PM — sent to Dr. Sharma</div>
+          <div style="height:4px;background:var(--surface2);border-radius:2px;"><div style="width:60%;height:100%;background:#4f8ef7;border-radius:2px;"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Next: Sunday 9:00 PM</div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:18px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="font-size:20px;">🚨</span>
+            <div style="font-size:13px;font-weight:700;">Emergency Alerts</div>
+            <span style="color:var(--muted);margin-left:auto;font-size:10px;">● STANDBY</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Triggers if risk score crosses 85% — notifies doctor instantly</div>
+          <div style="height:4px;background:var(--surface2);border-radius:2px;"><div style="width:20%;height:100%;background:#f59e0b;border-radius:2px;"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Threshold: 85% risk</div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── SECTION: AI CHAT ── -->
     <section id="chat">
-      <div style="font-size:18px;font-weight:800;margin-bottom:18px;">💬 AI Health Chat</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:18px;">💬 AI Health Chat
+        <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px;">Powered by ML + Agentic AI</span>
+      </div>
       <div class="card" style="padding:0;overflow:hidden;">
-        <!-- Chat header -->
         <div style="background:var(--surface2);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:10px;">
           <div style="width:32px;height:32px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">⚡</div>
           <div>
-            <div style="font-size:13px;font-weight:700;">HealthSense AI</div>
-            <div style="font-size:11px;color:var(--accent3);display:flex;align-items:center;gap:4px;"><span class="pulse-anim">●</span> 3 agents online</div>
+            <div style="font-size:13px;font-weight:700;">HealthSense AI — 3 Agents</div>
+            <div style="font-size:11px;color:var(--accent3);display:flex;align-items:center;gap:4px;"><span class="pulse-anim">●</span> Risk Agent · Medication Agent · Mental Health Agent</div>
           </div>
-          <span class="tag tag-yellow" style="margin-left:auto;">1 approval pending</span>
+          <span class="tag tag-yellow" style="margin-left:auto;cursor:pointer;" onclick="triggerHITL()">⚠ 1 Approval</span>
         </div>
-        <!-- Chat messages -->
-        <div id="chat-messages" style="padding:18px;display:flex;flex-direction:column;gap:14px;min-height:300px;max-height:400px;overflow-y:auto;background:var(--bg);">
+        <div id="chat-messages" style="padding:18px;display:flex;flex-direction:column;gap:14px;min-height:320px;max-height:420px;overflow-y:auto;background:var(--bg);">
           <div class="chat-bubble-ai">
-            <div style="font-size:11px;color:var(--accent);margin-bottom:4px;">🧠 ML Risk Engine</div>
-            Namaskar Priya! Aaj subah tumhara analysis complete hua. <strong style="color:#f7794f;">Diabetes risk 78%</strong> detect hui hai — 3 hafte se thakaan + zyada pyaas + blurred vision ka pattern mila. Family history bhi hamare memory mein hai.
+            <div style="font-size:10px;color:var(--accent);margin-bottom:5px;font-weight:700;letter-spacing:0.5px;">🧠 ML RISK ENGINE — 84% CONFIDENCE</div>
+            Namaskar Priya! Aaj subah tera complete health analysis hua. <strong style="color:#f7794f;">Diabetes risk 78%</strong> detect hui hai.<br><br>
+            <strong>Reasons (Explainability Layer):</strong><br>
+            ✦ 3 hafte se zyada thakaan — fatigue pattern<br>
+            ✦ Excessive thirst (polydipsia) — classic diabetes symptom<br>
+            ✦ Blurred vision — 4 episodes last week<br>
+            ✦ Papa ko Type 2 Diabetes tha — <span style="color:#00d4b4;">Family Memory detected ✓</span><br>
+            ✦ Fasting glucose: <span style="color:#f7794f;">126 mg/dL</span> (borderline diabetic range)
           </div>
           <div class="chat-bubble-ai">
-            <div style="font-size:11px;color:var(--accent2);margin-bottom:4px;">⚡ Agentic AI</div>
-            Mere paas ek action plan hai. <strong>Dr. Priya Sharma</strong> (Endocrinologist, 2.3km away) kal 10 AM available hain. Kya main appointment book karun?
+            <div style="font-size:10px;color:var(--accent2);margin-bottom:5px;font-weight:700;letter-spacing:0.5px;">⚡ AGENTIC AI — ACTION PLAN READY</div>
+            Teri health history meri memory mein hai. Teen agents ne milke yeh plan banaya hai:<br><br>
+            <strong>Step 1 (Risk Agent):</strong> Endocrinologist consultation urgent — 48 hrs mein<br>
+            <strong>Step 2 (Medication Agent):</strong> Metformin dose review — Dr. Sharma dekhein<br>
+            <strong>Step 3 (Automation):</strong> Daily glucose log start karun + weekly report Dr. ko<br><br>
+            <span style="color:#4f8ef7;">Dr. Priya Sharma</span> (Endocrinologist, 2.3km away) kal 10 AM available hain.
           </div>
           <div class="chat-bubble-hitl" id="hitl-chat-msg">
-            <div style="font-size:11px;color:#f59e0b;font-weight:700;margin-bottom:8px;">🧑‍💼 Human Approval Required</div>
-            <div style="font-size:13px;margin-bottom:12px;">Shall I book an appointment with <strong>Dr. Priya Sharma</strong> for tomorrow at <strong>10:00 AM</strong>?</div>
+            <div style="font-size:11px;color:#f59e0b;font-weight:700;margin-bottom:8px;">🧑‍💼 HUMAN-IN-THE-LOOP — Tera Decision Chahiye</div>
+            <div style="font-size:13px;margin-bottom:12px;">AI ne suggest kiya: <strong>Dr. Priya Sharma ka appointment kal 10 AM</strong> book karun aur daily glucose reminder set karun?</div>
             <div style="display:flex;gap:8px;">
-              <button onclick="approveBooking()" style="flex:1;padding:9px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">✓ Yes, Book it</button>
-              <button onclick="rejectBooking()" style="flex:1;padding:9px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer;">✗ No thanks</button>
+              <button onclick="approveBooking()" style="flex:1;padding:9px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">✓ Haan, Book karo</button>
+              <button onclick="rejectBooking()" style="flex:1;padding:9px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer;">✗ Abhi nahi</button>
             </div>
           </div>
         </div>
-        <!-- Chat input -->
-        <div style="border-top:1px solid var(--border);padding:14px 18px;display:flex;gap:10px;background:var(--surface2);">
-          <input id="chat-input" class="input" placeholder="Type your symptoms or ask anything..." style="flex:1;"/>
-          <button onclick="sendMessage()" class="btn btn-primary">Send →</button>
+        <div style="border-top:1px solid var(--border);padding:14px 18px;background:var(--surface2);">
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+            <button onclick="quickAsk('Mera diabetes risk kyun badh raha hai?')" style="font-size:11px;padding:5px 12px;background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:20px;cursor:pointer;">Diabetes risk kyun?</button>
+            <button onclick="quickAsk('Mujhe kaunsi diet follow karni chahiye?')" style="font-size:11px;padding:5px 12px;background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:20px;cursor:pointer;">Diet advice</button>
+            <button onclick="quickAsk('Meri medication sahi hai?')" style="font-size:11px;padding:5px 12px;background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:20px;cursor:pointer;">Medication check</button>
+            <button onclick="quickAsk('Kya mujhe abhi doctor ke paas jaana chahiye?')" style="font-size:11px;padding:5px 12px;background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:20px;cursor:pointer;">Doctor zaroori?</button>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <input id="chat-input" class="input" placeholder="Apne symptoms ya koi bhi sawaal poochho..." style="flex:1;"/>
+            <button onclick="sendMessage()" class="btn btn-primary">Send →</button>
+          </div>
         </div>
       </div>
     </section>
@@ -536,15 +590,35 @@
     `;
   }
 
-  function addChatMessage(type, text, color) {
-    const box = document.getElementById('chat-messages');
-    const div = document.createElement('div');
-    div.className = type === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai';
-    if (type === 'ai') div.innerHTML = `<div style="font-size:11px;color:${color||'#4f8ef7'};margin-bottom:4px;">⚡ HealthSense AI</div>${text}`;
-    else div.textContent = text;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
+  // ── Smart AI responses — keyword-based Agentic AI ──
+  const AI_RESPONSES = {
+    diabetes: { agent:'🧠 Risk Agent', color:'#4f8ef7', text:`<strong>Diabetes risk 78%</strong> hai teri. Main reasons:<br><br>✦ Fasting glucose 126 mg/dL — borderline diabetic range<br>✦ Polydipsia (zyada pyaas) + Polyuria pattern detected<br>✦ Papa ko Type 2 Diabetes tha — <span style="color:#00d4b4;">Family Memory record ✓</span><br><br><strong>Agentic AI suggestion:</strong> HbA1c test is week karwao. Dr. Sharma ko message kiya — kal 10 AM slot hold kar liya. <span style="color:#f59e0b;">Appointment confirm karun?</span>` },
+    diet: { agent:'🥗 Nutrition Agent', color:'#00d4b4', text:`Teri health profile ke basis pe personalized diet plan:<br><br><strong style="color:#00d4b4;">✅ Include karo:</strong> Daliya, brown rice, moong dal, curd, sabziyan, ajwain water, amla<br><strong style="color:#ef4444;">❌ Avoid karo:</strong> White rice, maida, sugary drinks, processed food, late night eating<br><strong style="color:#f59e0b;">⏰ Meal timing:</strong> 3 main meals + 2 snacks, 2 ghante se zyada mat bhookho<br><br><span style="color:#4f8ef7;">Automation: Daily diet reminder set karun? Subah 7 AM pe?</span>` },
+    medication: { agent:'💊 Medication Agent', color:'#7c5cd8', text:`Teri current medications review:<br><br>✦ <strong>Metformin 500mg</strong> — 92% adherence ✅ Excellent<br>✦ <strong>Amlodipine 5mg</strong> — 88% adherence ✓ Good<br>✦ <strong>Vitamin D3 60K IU</strong> — Sunday due (3 days baki)<br><br>⚠️ Kal subah ek dose miss hua tha — automation ne WhatsApp reminder bheja tha. Koi side effects feel ho rahe hain Metformin se? Kabhi kabhi nausea hoti hai khali pet lene se.` },
+    doctor: { agent:'⚡ Agentic AI', color:'#f59e0b', text:`<strong>Haan, doctor consultation urgent hai!</strong><br><br>78% diabetes risk ke saath 48 ghante mein endocrinologist se milna chahiye.<br><br><strong>Best Match — Dr. Priya Sharma</strong><br>📍 2.3km away · ⭐ 4.8 rating (142 reviews)<br>🕐 Kal 10:00 AM available · 💰 ₹500 consultation<br><br><button onclick="approveBooking()" style="margin-top:8px;padding:8px 16px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✓ Book Appointment</button>` },
+    bp: { agent:'🧠 Risk Agent', color:'#f7794f', text:`Blood pressure 130/85 mmHg hai — <strong style="color:#f59e0b;">slightly elevated</strong>.<br><br>✦ Normal range: 120/80 ya below<br>✦ Nana Ji ko BP + Heart issue tha — Family Memory record mein<br>✦ Current trend: Last 2 weeks mein 5 mmHg badha<br><br>Amlodipine sahi chal rahi hai. Salt intake kam karo, stress manage karo. Weekly BP log automation mein set hai.` },
+    stress: { agent:'🧘 Mental Health Agent', color:'#7c5cd8', text:`Stress aur anxiety health pe seedha asar karta hai.<br><br>✦ Teri sleep pattern last week irregular thi — <strong style="color:#f59e0b;">5.5 hrs average</strong><br>✦ 7-8 ghante ki neend diabetes management ke liye zaroori hai<br>✦ Cortisol (stress hormone) glucose level badhaata hai<br><br><strong>Suggestions:</strong> 10 min deep breathing subah, phone 30 min pehle band karo sone se, chamomile tea raat ko. <span style="color:#00d4b4;">Sleep tracker automation set karun?</span>` }
+  };
+  const DEFAULT_RESPONSES = [
+    { agent:'🧠 Risk Agent', color:'#4f8ef7', text:'Tera yeh symptom note ho gaya. ML engine mein record update ho raha hai. Risk score recalculate ho raha hai. Kitne din se yeh symptom hai aur kab zyada badh jaata hai?' },
+    { agent:'⚡ Agentic AI', color:'#7c5cd8', text:'Main teri 3 hafte ki health history dekh raha hoon. Is pattern ko pehle bhi note kiya tha. Risk Agent + Medication Agent dono is data pe kaam kar rahe hain. Kuch aur symptoms hain saath mein?' },
+    { agent:'💊 Medication Agent', color:'#00d4b4', text:'Yeh symptom kisi medication ke baad shuru hua? Metformin kabhi kabhi nausea de sakta hai empty stomach pe. Khaane ke 30 min baad lena better hai. Dose timing check karo apni schedule mein.' },
+    { agent:'🧘 Mental Health Agent', color:'#7c5cd8', text:'Kabhi kabhi physical symptoms ka root cause stress hota hai. Teri sleep aur stress levels monitor ho rahi hain. Last week 5.5 hrs average sleep thi — yeh diabetes aur BP dono ke liye problematic hai.' }
+  ];
+  let _ri = 0;
+
+  function getAIResponse(msg) {
+    const l = msg.toLowerCase();
+    if (l.includes('diabetes') || l.includes('sugar') || l.includes('glucose') || l.includes('thirst') || l.includes('pyaas')) return AI_RESPONSES.diabetes;
+    if (l.includes('diet') || l.includes('khana') || l.includes('food') || l.includes('kya khaun') || l.includes('nutrition')) return AI_RESPONSES.diet;
+    if (l.includes('medicine') || l.includes('medication') || l.includes('tablet') || l.includes('dawa') || l.includes('metformin')) return AI_RESPONSES.medication;
+    if (l.includes('doctor') || l.includes('appointment') || l.includes('consult') || l.includes('dr') || l.includes('hospital')) return AI_RESPONSES.doctor;
+    if (l.includes('bp') || l.includes('blood pressure') || l.includes('pressure') || l.includes('headache')) return AI_RESPONSES.bp;
+    if (l.includes('stress') || l.includes('anxiety') || l.includes('sleep') || l.includes('neend') || l.includes('tension')) return AI_RESPONSES.stress;
+    return DEFAULT_RESPONSES[_ri++ % DEFAULT_RESPONSES.length];
   }
+
+  function quickAsk(q) { document.getElementById('chat-input').value = q; sendMessage(); }
 
   function sendMessage() {
     const input = document.getElementById('chat-input');
@@ -552,14 +626,74 @@
     if (!msg) return;
     addChatMessage('user', msg);
     input.value = '';
+    // Typing indicator
+    const box = document.getElementById('chat-messages');
+    const tid = 'typing-' + Date.now();
+    const t = document.createElement('div');
+    t.id = tid; t.className = 'chat-bubble-ai';
+    t.innerHTML = '<span style="color:var(--muted);font-size:12px;">⚡ Agent is thinking<span id="tdots">.</span></span>';
+    box.appendChild(t); box.scrollTop = box.scrollHeight;
+    let dc = 0;
+    const di = setInterval(() => { const d=document.getElementById('tdots'); if(d) d.textContent='.'.repeat((++dc%3)+1); }, 400);
     setTimeout(() => {
-      addChatMessage('ai', 'Samajh gaya. Tumhara yeh concern record ho gaya hai. ML engine is data ke saath analysis update karega. Kya aur kuch bata sakte ho — symptoms ya duration?', '#7c5cd8');
-    }, 1000);
+      clearInterval(di);
+      const el = document.getElementById(tid); if (el) el.remove();
+      const resp = getAIResponse(msg);
+      addChatMessage('ai', resp.text, resp.color, resp.agent);
+    }, 1400);
   }
 
-  document.getElementById('chat-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') sendMessage();
-  });
+  // ── Family Graph Modal ──
+  function openFamilyGraph() {
+    const m = document.createElement('div');
+    m.id = 'fg-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(5,9,20,0.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;';
+    m.innerHTML = `
+      <div style="background:#0d1526;border:1px solid #1e2d4a;border-radius:18px;padding:32px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+          <div><div style="font-size:17px;font-weight:800;">🏥 Family Health Graph</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Hereditary risk — ML memory mein stored</div></div>
+          <button onclick="document.getElementById('fg-modal').remove()" style="background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="display:flex;justify-content:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
+            <div style="padding:10px 14px;background:rgba(247,121,79,0.1);border:1px solid rgba(247,121,79,0.3);border-radius:10px;font-size:12px;"><div style="font-weight:700;">Nana Ji</div><div style="color:#f7794f;font-size:11px;">BP + Heart</div></div>
+            <div style="padding:10px 14px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;font-size:12px;"><div style="font-weight:700;">Nani Ji</div><div style="color:#f59e0b;font-size:11px;">Diabetes T2</div></div>
+            <div style="padding:10px 14px;background:rgba(107,127,163,0.1);border:1px solid var(--border);border-radius:10px;font-size:12px;"><div style="font-weight:700;">Dada Ji</div><div style="color:var(--muted);font-size:11px;">Healthy</div></div>
+            <div style="padding:10px 14px;background:rgba(107,127,163,0.1);border:1px solid var(--border);border-radius:10px;font-size:12px;"><div style="font-weight:700;">Dadi Ji</div><div style="color:var(--muted);font-size:11px;">Healthy</div></div>
+          </div>
+          <div style="color:var(--muted);font-size:16px;margin-bottom:8px;">↓</div>
+          <div style="display:flex;justify-content:center;gap:16px;margin-bottom:8px;">
+            <div style="padding:12px 18px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);border-radius:10px;font-size:12px;"><div style="font-weight:700;">Papa (55)</div><div style="color:#ef4444;font-size:11px;margin-top:2px;">⚠ Diabetes T2<br>Age 48 se</div></div>
+            <div style="padding:12px 18px;background:rgba(107,127,163,0.1);border:1px solid var(--border);border-radius:10px;font-size:12px;"><div style="font-weight:700;">Mummy (52)</div><div style="color:var(--muted);font-size:11px;margin-top:2px;">✓ Healthy<br>BP borderline</div></div>
+          </div>
+          <div style="color:var(--muted);font-size:16px;margin-bottom:8px;">↓</div>
+          <div style="display:inline-block;padding:14px 28px;background:rgba(79,142,247,0.15);border:2px solid var(--accent);border-radius:12px;font-size:13px;"><div style="font-weight:800;color:var(--accent);">You — Priya (38)</div><div style="color:#f7794f;font-size:12px;margin-top:4px;">⚠ Diabetes Risk: <strong>78%</strong></div><div style="color:var(--muted);font-size:11px;margin-top:2px;">Hereditary factor: Active</div></div>
+        </div>
+        <div style="background:#111d35;border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:700;color:#4f8ef7;margin-bottom:8px;">🧠 ML Hereditary Risk Analysis</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.9;">
+            ✦ Papa ko Diabetes T2 — <strong style="color:#f7794f;">+25% hereditary risk boost</strong><br>
+            ✦ Nani Ji ko bhi Diabetes — <strong style="color:#f7794f;">+12% additional risk</strong><br>
+            ✦ Nana Ji ko BP + Heart — <strong style="color:#f59e0b;">+8% cardiovascular watch</strong><br>
+            ✦ Combined hereditary score: <strong style="color:#ef4444;">High Risk Category</strong>
+          </div>
+        </div>
+        <button onclick="document.getElementById('fg-modal').remove();showToast('Family graph saved in AI Memory ✓', 'success')" style="width:100%;padding:12px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;">✓ Save to AI Memory</button>
+      </div>`;
+    document.body.appendChild(m);
+  }
+
+  function addChatMessage(type, text, color, agent) {
+    const box = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = type === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai';
+    if (type === 'ai') div.innerHTML = `<div style="font-size:10px;color:${color||'#4f8ef7'};margin-bottom:5px;font-weight:700;letter-spacing:0.5px;">${agent||'⚡ HealthSense AI'}</div>${text}`;
+    else div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  document.getElementById('chat-input').addEventListener('keydown', (e) => { if (e.key==='Enter') sendMessage(); });
 </script>
 </body>
 </html>

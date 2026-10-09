@@ -96,7 +96,7 @@
       <li><a href="#alerts"   style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>🚨</span> Alerts <span style="margin-left:auto;background:rgba(239,68,68,0.2);color:#ef4444;font-size:10px;padding:1px 7px;border-radius:10px;">3</span></a></li>
       <li><a href="#analytics" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📊</span> Analytics</a></li>
       <li><a href="#reports"   style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📋</span> AI Reports</a></li>
-      <li><a href="#" onclick="showDrToast('📅 Appointments view coming soon', 'info');return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📅</span> Appointments</a></li>
+      <li><a href="#appointments" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📅</span> Appointments</a></li>
       <li><a href="#" onclick="openDrSettings();return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>⚙️</span> Settings</a></li>
     </ul>
 
@@ -389,6 +389,160 @@
       </div>
     </section>
 
+    <!-- ══════════════════════════════════════════════════════════
+         APPOINTMENTS SECTION
+    ══════════════════════════════════════════════════════════ -->
+    <section id="appointments" style="margin-bottom:32px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-size:16px;font-weight:800;">📅 Appointments</div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="filterAppts('all')" id="appt-filter-all" class="btn btn-primary btn-sm">All</button>
+          <button onclick="filterAppts('ai')" id="appt-filter-ai" class="btn btn-outline btn-sm">AI-Booked</button>
+          <button onclick="filterAppts('manual')" id="appt-filter-manual" class="btn btn-outline btn-sm">Manual</button>
+          <button onclick="openAddApptModal()" class="btn btn-outline btn-sm" style="border-color:var(--teal);color:var(--teal);">+ Add</button>
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px;">
+        <div style="padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--accent);">8</div>
+          <div style="font-size:11px;color:var(--muted);">Today</div>
+        </div>
+        <div style="padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--teal);">3</div>
+          <div style="font-size:11px;color:var(--muted);">AI-Booked</div>
+        </div>
+        <div style="padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--yellow);">2</div>
+          <div style="font-size:11px;color:var(--muted);">Pending Confirm</div>
+        </div>
+        <div style="padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--green);">5</div>
+          <div style="font-size:11px;color:var(--muted);">Confirmed</div>
+        </div>
+      </div>
+
+      <!-- Appointment list -->
+      <div id="appt-list" style="display:flex;flex-direction:column;gap:10px;">
+
+        <!-- AI-Booked, Pending -->
+        <div class="appt-card" data-type="ai" style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid rgba(79,142,247,0.35);border-radius:14px;border-left:4px solid var(--accent);">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">👩</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <span style="font-size:13px;font-weight:700;">Priya Verma</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(79,142,247,0.18);color:var(--accent);font-weight:700;">🤖 AI-Booked</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,190,70,0.15);color:var(--yellow);font-weight:700;">⏳ Pending</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);">Follow-up: Diabetes risk escalation — AI agent flagged urgent review needed</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 Today, 10:30 AM &nbsp;·&nbsp; 🕐 30 min &nbsp;·&nbsp; 📍 Room 3</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button onclick="confirmAppt(this,'Priya Verma')" class="btn btn-primary btn-sm">✓ Confirm</button>
+            <button onclick="cancelAppt(this,'Priya Verma')" class="btn btn-outline btn-sm" style="color:#ff6b6b;border-color:#ff6b6b;">✕</button>
+          </div>
+        </div>
+
+        <!-- AI-Booked, Pending -->
+        <div class="appt-card" data-type="ai" style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid rgba(79,142,247,0.35);border-radius:14px;border-left:4px solid var(--accent);">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#00d4b4,#4f8ef7);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">👨</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <span style="font-size:13px;font-weight:700;">Rahul Mehta</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(79,142,247,0.18);color:var(--accent);font-weight:700;">🤖 AI-Booked</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(255,190,70,0.15);color:var(--yellow);font-weight:700;">⏳ Pending</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);">BP trend review — 10-day upward pattern, medication adherence drop detected</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 Today, 2:00 PM &nbsp;·&nbsp; 🕐 20 min &nbsp;·&nbsp; 📍 Room 1</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button onclick="confirmAppt(this,'Rahul Mehta')" class="btn btn-primary btn-sm">✓ Confirm</button>
+            <button onclick="cancelAppt(this,'Rahul Mehta')" class="btn btn-outline btn-sm" style="color:#ff6b6b;border-color:#ff6b6b;">✕</button>
+          </div>
+        </div>
+
+        <!-- AI-Booked, Confirmed -->
+        <div class="appt-card" data-type="ai" style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid rgba(0,212,180,0.3);border-radius:14px;border-left:4px solid var(--teal);">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#7c5cd8,#00d4b4);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">👧</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <span style="font-size:13px;font-weight:700;">Meera Sharma</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(79,142,247,0.18);color:var(--accent);font-weight:700;">🤖 AI-Booked</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(0,212,180,0.18);color:var(--teal);font-weight:700;">✓ Confirmed</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);">Mental health check-in — stress score 78%, sleep disruption pattern flagged</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 Today, 4:00 PM &nbsp;·&nbsp; 🕐 45 min &nbsp;·&nbsp; 📍 Room 2</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button onclick="showDrToast('Opening patient notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+            <button onclick="rescheduleAppt('Meera Sharma')" class="btn btn-outline btn-sm">↻ Reschedule</button>
+          </div>
+        </div>
+
+        <!-- Manual, Confirmed -->
+        <div class="appt-card" data-type="manual" style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid rgba(0,212,180,0.3);border-radius:14px;border-left:4px solid var(--teal);">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#ff9f43,#ff6b6b);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">👴</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <span style="font-size:13px;font-weight:700;">Arjun Singh</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(124,92,216,0.18);color:var(--purple);font-weight:700;">👤 Manual</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(0,212,180,0.18);color:var(--teal);font-weight:700;">✓ Confirmed</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);">Routine monthly check-up — diabetes management, HbA1c review</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 Tomorrow, 11:00 AM &nbsp;·&nbsp; 🕐 30 min &nbsp;·&nbsp; 📍 Room 4</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button onclick="showDrToast('Opening patient notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+            <button onclick="rescheduleAppt('Arjun Singh')" class="btn btn-outline btn-sm">↻ Reschedule</button>
+          </div>
+        </div>
+
+        <!-- Manual, Confirmed -->
+        <div class="appt-card" data-type="manual" style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid rgba(0,212,180,0.3);border-radius:14px;border-left:4px solid var(--teal);">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#4f8ef7,#00d4b4);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">👩</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <span style="font-size:13px;font-weight:700;">Sunita Patel</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(124,92,216,0.18);color:var(--purple);font-weight:700;">👤 Manual</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(0,212,180,0.18);color:var(--teal);font-weight:700;">✓ Confirmed</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);">New patient consultation — hypertension symptoms, initial assessment</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 Tomorrow, 3:30 PM &nbsp;·&nbsp; 🕐 60 min &nbsp;·&nbsp; 📍 Room 1</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button onclick="showDrToast('Opening patient notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+            <button onclick="rescheduleAppt('Sunita Patel')" class="btn btn-outline btn-sm">↻ Reschedule</button>
+          </div>
+        </div>
+
+        <!-- Manual, Confirmed -->
+        <div class="appt-card" data-type="manual" style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid rgba(0,212,180,0.3);border-radius:14px;border-left:4px solid var(--teal);">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#7c5cd8,#4f8ef7);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🧒</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <span style="font-size:13px;font-weight:700;">Kavya Reddy</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(124,92,216,0.18);color:var(--purple);font-weight:700;">👤 Manual</span>
+              <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(0,212,180,0.18);color:var(--teal);font-weight:700;">✓ Confirmed</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);">Pediatric follow-up — growth metrics, vaccination update</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 Day after tomorrow, 9:00 AM &nbsp;·&nbsp; 🕐 20 min &nbsp;·&nbsp; 📍 Room 5</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button onclick="showDrToast('Opening patient notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+            <button onclick="rescheduleAppt('Kavya Reddy')" class="btn btn-outline btn-sm">↻ Reschedule</button>
+          </div>
+        </div>
+
+      </div><!-- /appt-list -->
+
+      <!-- HITL note -->
+      <div style="margin-top:14px;padding:12px 16px;background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.25);border-radius:10px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:16px;">🤖</span>
+        <span style="font-size:12px;color:var(--muted);">AI-Booked appointments require your confirmation before being finalised. All AI actions follow <strong style="color:var(--accent);">Human-in-the-Loop</strong> protocol.</span>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -413,6 +567,49 @@
     d.textContent = msg;
     document.body.appendChild(d);
     setTimeout(() => d.remove(), 3000);
+  }
+
+  // ── Appointments ──
+  function filterAppts(type) {
+    const cards = document.querySelectorAll('.appt-card');
+    cards.forEach(c => {
+      c.style.display = (type === 'all' || c.dataset.type === type) ? 'flex' : 'none';
+    });
+    ['all','ai','manual'].forEach(t => {
+      const btn = document.getElementById('appt-filter-' + t);
+      if (btn) { btn.className = t === type ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'; }
+    });
+  }
+
+  function confirmAppt(btn, name) {
+    const card = btn.closest('.appt-card');
+    // Replace Pending badge with Confirmed
+    const pending = card.querySelector('[style*="var(--yellow)"]');
+    if (pending) { pending.style.background = 'rgba(0,212,180,0.18)'; pending.style.color = 'var(--teal)'; pending.textContent = '✓ Confirmed'; }
+    // Swap buttons to Notes + Reschedule
+    btn.closest('div[style*="flex-shrink:0"]').innerHTML =
+      `<button onclick="showDrToast('Opening patient notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+       <button onclick="rescheduleAppt('${name}')" class="btn btn-outline btn-sm">↻ Reschedule</button>`;
+    // Update card border to teal
+    card.style.border = '1px solid rgba(0,212,180,0.3)';
+    card.style.borderLeft = '4px solid var(--teal)';
+    showDrToast('Appointment confirmed for ' + name, 'success');
+  }
+
+  function cancelAppt(btn, name) {
+    const card = btn.closest('.appt-card');
+    card.style.opacity = '0';
+    card.style.transition = 'opacity 0.3s';
+    setTimeout(() => card.remove(), 300);
+    showDrToast('Appointment cancelled for ' + name, 'info');
+  }
+
+  function rescheduleAppt(name) {
+    showDrToast('Reschedule flow coming soon for ' + name, 'info');
+  }
+
+  function openAddApptModal() {
+    showDrToast('Add appointment modal coming soon', 'info');
   }
 
   // ── Doctor Settings modal ──
