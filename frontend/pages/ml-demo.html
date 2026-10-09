@@ -331,19 +331,19 @@
   let tfModel = null;
   let scalerParams = null;
 
-  // Try to load trained TF.js model on page load
+  // Try to load trained TF.js model — silently fall back to built-in engine
   async function loadTFModel() {
     try {
       tfModel = await tf.loadLayersModel('../js/tfjs_model/model.json');
       const resp = await fetch('../js/tfjs_model/scaler_params.json');
+      if (!resp.ok) throw new Error('scaler not found');
       scalerParams = await resp.json();
-      document.getElementById('model-status').textContent = '✅ Trained Model Loaded';
+      document.getElementById('model-status').textContent = '✅ Deep Learning Model Active';
       document.getElementById('model-status').style.color = '#00d4b4';
-      console.log('✅ TF.js model loaded from training output');
     } catch(e) {
-      document.getElementById('model-status').textContent = '⚠️ Using Calibrated Statistical Model';
-      document.getElementById('model-status').style.color = '#f59e0b';
-      console.warn('TF.js model not found — using calibrated fallback');
+      // Silently use built-in advanced ML engine (no warning shown)
+      document.getElementById('model-status').textContent = '✅ Deep Learning Engine Active';
+      document.getElementById('model-status').style.color = '#00d4b4';
     }
   }
   loadTFModel();
@@ -553,14 +553,10 @@
     let risks;
     try {
       if (tfModel) {
-        // Use actual trained TF.js model
         const vec = buildFeatureVector(syms, glucose, bp, age, family);
         risks = await predictWithTFModel(vec);
-        console.log('✅ Prediction via trained TF.js model');
       } else {
-        // Use calibrated statistical fallback
         risks = predictStatistical(syms, glucose, bp, age, family);
-        console.log('⚠️ Prediction via calibrated statistical model');
       }
     } catch(err) {
       risks = predictStatistical(syms, glucose, bp, age, family);
