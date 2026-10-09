@@ -157,8 +157,8 @@
           <div style="font-size:11px;color:var(--muted);margin-top:3px;">Today, 6:42 AM · Risk Agent</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
-          <button onclick="window.HS && HS.showToast('Priya Verma appointment confirmed for 10 AM', 'success')" class="btn btn-danger btn-sm">Urgent Consult</button>
-          <button onclick="window.HS && HS.showToast('Report opened', 'info')" class="btn btn-outline btn-sm">View Report</button>
+          <button onclick="showDrToast('Appointment booked for Priya Verma — Today 10 AM ✓', 'success')" class="btn btn-danger btn-sm">Urgent Consult</button>
+          <button onclick="openPatientDetail('Priya Verma', 78)" class="btn btn-outline btn-sm">View Report</button>
         </div>
       </div>
 
@@ -170,8 +170,8 @@
           <div style="font-size:11px;color:var(--muted);margin-top:3px;">Today, 8:10 AM · Medication Agent</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
-          <button onclick="window.HS && HS.showToast('Message sent to Rahul Mehta', 'success')" class="btn btn-warning btn-sm">Send Message</button>
-          <button onclick="showDrToast('📈 BP trend chart opened for Rahul Mehta', 'info')" class="btn btn-outline btn-sm">View Trend</button>
+          <button onclick="showDrToast('Message sent to Rahul Mehta ✓', 'success')" class="btn btn-warning btn-sm">Send Message</button>
+          <button onclick="openPatientDetail('Rahul Mehta', 62)" class="btn btn-outline btn-sm">View Trend</button>
         </div>
       </div>
 
@@ -183,8 +183,8 @@
           <div style="font-size:11px;color:var(--muted);margin-top:3px;">Yesterday, 11:30 PM · Mental Health Agent</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
-          <button onclick="window.HS && HS.showToast('Check-in message sent to Sneha', 'success')" class="btn btn-primary btn-sm">Schedule Check-in</button>
-          <button onclick="showDrToast('🧘 Mental health details opened for Sneha Patel', 'info')" class="btn btn-outline btn-sm">View Details</button>
+          <button onclick="showDrToast('Check-in scheduled for Sneha Patel ✓', 'success')" class="btn btn-primary btn-sm">Schedule Check-in</button>
+          <button onclick="openPatientDetail('Sneha Patel', 45)" class="btn btn-outline btn-sm">View Details</button>
         </div>
       </div>
     </section>
@@ -547,13 +547,15 @@
 </div>
 
 <!-- Patient Detail Modal -->
-<div id="patient-modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(5,9,20,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;">
-  <div style="background:#0d1526;border:1px solid var(--border);border-radius:18px;padding:32px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <div style="font-size:17px;font-weight:800;" id="modal-name">Patient Details</div>
-      <button onclick="document.getElementById('patient-modal').style.display='none'" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+<div id="patient-modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(5,9,20,0.85);backdrop-filter:blur(8px);padding:24px;overflow-y:auto;">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:100%;">
+    <div style="background:#0d1526;border:1px solid var(--border);border-radius:18px;padding:32px;max-width:500px;width:100%;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="font-size:17px;font-weight:800;" id="modal-name">Patient Details</div>
+        <button onclick="closePatientModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+      </div>
+      <div id="modal-body"></div>
     </div>
-    <div id="modal-body"></div>
   </div>
 </div>
 
@@ -644,28 +646,44 @@
     document.body.appendChild(m);
   }
 
+  function closePatientModal() {
+    document.getElementById('patient-modal').style.display = 'none';
+  }
+
   function openPatientDetail(name, risk) {
     const modal = document.getElementById('patient-modal');
     const riskColor = risk > 65 ? '#ef4444' : risk > 40 ? '#f59e0b' : '#00d4b4';
-    document.getElementById('modal-name').textContent = name;
+    const riskLabel = risk > 65 ? 'High Risk' : risk > 40 ? 'Medium Risk' : 'Low Risk';
+    const conf = Math.min(95, Math.round(risk * 0.9 + 10));
+    document.getElementById('modal-name').textContent = '👤 ' + name;
     document.getElementById('modal-body').innerHTML = `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px;background:var(--surface2);border-radius:10px;">
-        <div style="font-size:32px;font-weight:900;color:${riskColor};">${risk}%</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;padding:14px;background:var(--surface2);border-radius:10px;border-left:3px solid ${riskColor};">
+        <div style="font-size:34px;font-weight:900;color:${riskColor};">${risk}%</div>
         <div>
-          <div style="font-size:13px;font-weight:700;">Risk Score</div>
-          <div style="font-size:12px;color:var(--muted);">ML Confidence: ${Math.round(risk * 0.9 + 10)}% · Updated today</div>
+          <div style="font-size:14px;font-weight:700;color:${riskColor};">${riskLabel}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">ML Confidence: ${conf}% · Updated today</div>
         </div>
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.8;padding:12px;background:rgba(79,142,247,0.06);border-radius:9px;border-left:3px solid #4f8ef7;">
-        <strong style="color:#4f8ef7;">AI Explanation:</strong><br>
+        <strong style="color:#4f8ef7;">🧠 AI Explanation:</strong><br>
         Risk calculated from symptom patterns, vitals trend, medication adherence, and family health graph data stored in agent memory.
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button onclick="window.HS && HS.showToast('Appointment booked for ${name}', 'success');document.getElementById('patient-modal').style.display='none'" style="flex:1;padding:11px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;min-width:120px;">Book Appointment</button>
-        <button onclick="window.HS && HS.showToast('Report sent to ${name}', 'info');document.getElementById('patient-modal').style.display='none'" style="flex:1;padding:11px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:9px;font-size:13px;cursor:pointer;min-width:120px;">Send Report</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="padding:10px;background:var(--surface2);border-radius:8px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Last Visit</div>
+          <div style="font-size:13px;font-weight:700;">Today</div>
+        </div>
+        <div style="padding:10px;background:var(--surface2);border-radius:8px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Adherence</div>
+          <div style="font-size:13px;font-weight:700;color:#00d4b4;">${Math.min(99, risk + 14)}%</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="showDrToast('Appointment booked for ${name} ✓', 'success');closePatientModal();" style="flex:1;padding:11px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">📅 Book Appointment</button>
+        <button onclick="showDrToast('Report sent to ${name} ✓', 'info');closePatientModal();" style="flex:1;padding:11px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:9px;font-size:13px;cursor:pointer;">📄 Send Report</button>
       </div>
     `;
-    modal.style.display = 'flex';
+    modal.style.display = 'block';
   }
 </script>
 </body>
