@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HealthSense AI — Predict. Reason. Act.</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    :root {
+      --bg: #050914;
+      --surface: #0d1526;
+      --surface2: #111d35;
+      --border: #1e2d4a;
+      --accent: #4f8ef7;
+      --accent2: #7c5cd8;
+      --accent3: #00d4b4;
+      --accent4: #f7794f;
+      --text: #e8edf5;
+      --muted: #6b7fa3;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── GRADIENT TEXT ── */
+    .grad-text {
+      background: linear-gradient(90deg, #4f8ef7, #7c5cd8, #00d4b4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── GLOW BACKGROUNDS ── */
+    .hero-glow {
+      position: absolute;
+      top: -120px; left: 50%;
+      transform: translateX(-50%);
+      width: 800px; height: 400px;
+      background: radial-gradient(ellipse, rgba(79,142,247,0.15) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero-glow2 {
+      position: absolute;
+      top: 60px; left: 20%;
+      width: 300px; height: 300px;
+      background: radial-gradient(ellipse, rgba(124,92,216,0.1) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 66px;
+      background: rgba(5,9,20,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #4f8ef7, #7c5cd8);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 900; color: #fff;
+    }
+    .nav-logo-text { font-size: 18px; font-weight: 800; color: var(--text); }
+    .nav-logo-text span { color: var(--accent); }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a {
+      font-size: 14px; color: var(--muted); text-decoration: none;
+      transition: color 0.2s; position: relative; padding-bottom: 4px;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+      height: 2px; background: var(--accent); border-radius: 2px;
+      transform: scaleX(0); transition: transform 0.2s;
+    }
+    .nav-links a:hover::after { transform: scaleX(1); }
+    .btn-primary {
+      background: linear-gradient(135deg, #4f8ef7, #7c5cd8);
+      color: #fff; border: none; padding: 9px 22px;
+      border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; text-decoration: none; display: inline-block;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border); padding: 9px 22px;
+      border-radius: 8px; font-size: 14px; cursor: pointer;
+      text-decoration: none; display: inline-block;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .btn-outline:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+    /* ── CARDS ── */
+    .card {
+      background: #0e1a2e;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .card:hover { border-color: rgba(79,142,247,0.4); transform: translateY(-3px); }
+
+    /* ── PIPELINE CARDS ── */
+    .pipeline-card { position: relative; overflow: hidden; }
+    .pipeline-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+    }
+    .pipeline-ml::before { background: linear-gradient(90deg, #4f8ef7, #6db3ff); }
+    .pipeline-ai::before { background: linear-gradient(90deg, #7c5cd8, #b088f9); }
+    .pipeline-auto::before { background: linear-gradient(90deg, #00d4b4, #00b89c); }
+
+    /* ── BADGE ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .badge-blue { background: rgba(79,142,247,0.12); border: 1px solid rgba(79,142,247,0.3); color: #4f8ef7; }
+    .badge-green { background: rgba(0,212,180,0.12); border: 1px solid rgba(0,212,180,0.3); color: #00d4b4; }
+
+    /* ── SECTION ── */
+    section { padding: 90px 0; }
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── SECTION HEADING ── */
+    .sec-label {
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 12px; display: block;
+    }
+    .sec-title { font-size: 36px; font-weight: 800; line-height: 1.2; letter-spacing: -0.5px; }
+    .sec-sub { font-size: 16px; color: var(--muted); margin-top: 12px; line-height: 1.7; }
+
+    /* ── STAT ── */
+    .stat-num { font-size: 36px; font-weight: 900; }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── UNIQUE FEATURE CARD ── */
+    .unique-card {
+      background: #0e1a2e; border: 1px solid var(--border);
+      border-radius: 14px; padding: 22px;
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .unique-card:hover { border-color: rgba(124,92,216,0.5); transform: translateY(-4px); }
+
+    /* ── WORKFLOW STEP ── */
+    .workflow-step {
+      display: flex; align-items: flex-start; gap: 16px;
+      padding: 18px 20px;
+      background: #0e1a2e; border: 1px solid var(--border);
+      border-radius: 12px; transition: border-color 0.3s;
+    }
+    .workflow-step:hover { border-color: rgba(79,142,247,0.4); }
+    .step-num {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+
+    /* ── HITL CARD ── */
+    .hitl-card {
+      border: 1px solid rgba(245,158,11,0.4);
+      background: rgba(245,158,11,0.05);
+    }
+    .hitl-card:hover { border-color: rgba(245,158,11,0.7); }
+
+    /* ── TESTIMONIAL ── */
+    .testi-card {
+      background: #0e1a2e; border: 1px solid var(--border);
+      border-radius: 14px; padding: 24px;
+    }
+
+    /* ── PRICING ── */
+    .pricing-featured {
+      border-color: var(--accent) !important;
+      background: linear-gradient(160deg, rgba(79,142,247,0.07), #0e1a2e) !important;
+      position: relative;
+    }
+
+    /* ── FLOATING ANIMATION ── */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    .float-anim { animation: float 4s ease-in-out infinite; }
+
+    /* ── FADE IN ANIMATION ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.6s ease forwards; }
+    .delay-1 { animation-delay: 0.1s; opacity: 0; }
+    .delay-2 { animation-delay: 0.2s; opacity: 0; }
+    .delay-3 { animation-delay: 0.3s; opacity: 0; }
+    .delay-4 { animation-delay: 0.4s; opacity: 0; }
+
+    /* ── PULSE DOT ── */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .pulse-dot { animation: pulse 1.5s ease-in-out infinite; }
+
+    /* ── TAG ── */
+    .tech-tag {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      padding: 3px 10px; border-radius: 10px;
+    }
+    .tag-blue { background: rgba(79,142,247,0.15); color: #4f8ef7; }
+    .tag-purple { background: rgba(124,92,216,0.15); color: #7c5cd8; }
+    .tag-green { background: rgba(0,212,180,0.15); color: #00d4b4; }
+    .tag-orange { background: rgba(247,121,79,0.15); color: #f7794f; }
+    .tag-yellow { background: rgba(245,158,11,0.15); color: #f59e0b; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 48px 0 28px;
+    }
+
+    /* ── MOBILE NAV TOGGLE ── */
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; }
+    .hamburger span { width: 22px; height: 2px; background: var(--text); border-radius: 2px; }
+
+    @media (max-width: 768px) {
+      .navbar { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .hero-h1 { font-size: 32px !important; }
+      .sec-title { font-size: 26px !important; }
+      .pipeline-grid { grid-template-columns: 1fr !important; }
+      .features-grid { grid-template-columns: 1fr 1fr !important; }
+      .pricing-grid { grid-template-columns: 1fr !important; }
+      .stats-row { grid-template-columns: 1fr 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════ -->
+<nav class="navbar">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">H</div>
+    <div class="nav-logo-text">Health<span>Sense</span> AI</div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#pipeline">Technology</a></li>
+    <li><a href="#unique">Why Us</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <div style="display:flex; gap:10px; align-items:center;">
+    <a href="pages/patient-dashboard.html" class="btn-outline">Dashboard</a>
+    <a href="pages/ml-demo.html" class="btn-primary">🧠 Live Demo</a>
+  </div>
+  <div class="hamburger" id="hamburger">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════
+     HERO SECTION
+════════════════════════════════════════ -->
+<section id="hero" style="padding-top: 140px; padding-bottom: 80px; position: relative; overflow: hidden;">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="container" style="position:relative; z-index:1; text-align:center;">
+
+    <div class="badge badge-blue fade-up" style="margin-bottom:24px;">
+      <span class="pulse-dot" style="color:#00d4b4;">●</span>
+      SDG Goal 3 — Good Health &amp; Well-Being
+    </div>
+
+    <h1 class="hero-h1 fade-up delay-1" style="font-size:52px; font-weight:900; line-height:1.1; letter-spacing:-2px; margin-bottom:22px;">
+      Describe Your Health Problem.<br>
+      <span class="grad-text">AI Predicts. Reasons. Acts.</span>
+    </h1>
+
+    <p class="fade-up delay-2" style="font-size:17px; color:var(--muted); max-width:580px; margin:0 auto 36px; line-height:1.8;">
+      Machine Learning detects risk. Agentic AI creates your personalized plan.
+      Automation executes — but only with <strong style="color:var(--text);">your approval</strong>.
+      Healthcare that works <em>for</em> you, not without you.
+    </p>
+
+    <div class="fade-up delay-3" style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom:52px;">
+      <a href="pages/ml-demo.html" class="btn-primary" style="font-size:16px; padding:14px 32px;">
+        🧠 Try Live ML Demo
+      </a>
+      <a href="#how-it-works" class="btn-outline" style="font-size:16px; padding:14px 32px;">
+        ▶ See How It Works
+      </a>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="fade-up delay-4 stats-row" style="display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border-radius:16px; overflow:hidden; border:1px solid var(--border); max-width:700px; margin:0 auto;">
+      <div style="background:var(--surface); padding:22px; text-align:center;">
+        <div class="stat-num" style="color:#4f8ef7;">98<span style="font-size:22px;">%</span></div>
+        <div class="stat-label">Prediction Accuracy</div>
+      </div>
+      <div style="background:var(--surface); padding:22px; text-align:center;">
+        <div class="stat-num" style="color:#7c5cd8;">3</div>
+        <div class="stat-label">AI Agents Working</div>
+      </div>
+      <div style="background:var(--surface); padding:22px; text-align:center;">
+        <div class="stat-num" style="color:#00d4b4;">50K<span style="font-size:22px;">+</span></div>
+        <div class="stat-label">Lives Impacted</div>
+      </div>
+      <div style="background:var(--surface); padding:22px; text-align:center;">
+        <div class="stat-num" style="color:#f7794f;">0</div>
+        <div class="stat-label">Critical Actions Without User OK</div>
+      </div>
+    </div>
+
+    <!-- Floating 2D Visual -->
+    <div class="float-anim" style="margin-top:56px;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:20px 28px; max-width:560px; margin:0 auto; text-align:left;">
+        <!-- Mock terminal / AI chat -->
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:#f07270;"></div>
+          <div style="width:10px;height:10px;border-radius:50%;background:#f5d155;"></div>
+          <div style="width:10px;height:10px;border-radius:50%;background:#5ac85a;"></div>
+          <span style="font-size:12px; color:var(--muted); margin-left:8px;">HealthSense AI — Agent Running</span>
+          <span class="pulse-dot" style="color:#00d4b4; margin-left:auto; font-size:10px;">● LIVE</span>
+        </div>
+        <div style="font-size:13px; line-height:2;">
+          <div style="color:var(--muted);">User:</div>
+          <div style="color:var(--text); margin-bottom:10px; padding:8px 12px; background:#111d35; border-radius:8px; font-style:italic;">"Main 3 hafte se thaka hua hoon, zyada pyaas lag rahi hai, aankhein dhundhli ho rahi hain..."</div>
+          <div style="color:#4f8ef7;">🧠 ML Risk Engine:</div>
+          <div style="color:var(--text); margin-bottom:10px; padding:8px 12px; background:#0a1628; border-radius:8px; border-left:3px solid #4f8ef7;">Diabetes Risk: <strong style="color:#f7794f;">78%</strong> confidence — Reason: Polydipsia + fatigue + vision changes pattern match. <span style="color:#00d4b4;">Family history detected in memory.</span></div>
+          <div style="color:#7c5cd8;">⚡ Agentic AI:</div>
+          <div style="color:var(--text); padding:8px 12px; background:#0a1628; border-radius:8px; border-left:3px solid #7c5cd8;">Dr. Priya Sharma (Endocrinologist, 2.3km away) is available tomorrow 10am. <strong style="color:#f59e0b;">Shall I book? [YES / NO]</strong></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     HOW IT WORKS
+════════════════════════════════════════ -->
+<section id="how-it-works" style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:56px;">
+      <span class="sec-label">Step by Step</span>
+      <h2 class="sec-title">How HealthSense AI Solves Your Problem</h2>
+      <p class="sec-sub" style="max-width:500px; margin:12px auto 0;">5 steps. 3 technologies. 1 goal — your health, protected.</p>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:14px; max-width:780px; margin:0 auto;">
+
+      <div class="workflow-step">
+        <div class="step-num" style="background:#4f8ef7;">1</div>
+        <div>
+          <div style="font-size:15px; font-weight:700; margin-bottom:4px;">You Describe Your Problem</div>
+          <div style="font-size:13px; color:var(--muted);">Type symptoms, upload reports, or simply speak in Hindi/your language. No medical jargon needed — just talk like you would to a friend.</div>
+        </div>
+        <span class="tech-tag tag-blue" style="flex-shrink:0; align-self:center;">Input Layer</span>
+      </div>
+
+      <div style="text-align:center; color:var(--muted); font-size:20px;">↓</div>
+
+      <div class="workflow-step">
+        <div class="step-num" style="background:#7c5cd8;">2</div>
+        <div>
+          <div style="font-size:15px; font-weight:700; margin-bottom:4px;">ML Engine Analyses & Predicts</div>
+          <div style="font-size:13px; color:var(--muted);">Our trained ML model finds patterns in your symptoms + history + family data. Gives a risk prediction with a <strong style="color:var(--text);">Confidence Score</strong> and <strong style="color:var(--text);">explains why</strong> — no black box.</div>
+        </div>
+        <span class="tech-tag tag-purple" style="flex-shrink:0; align-self:center;">ML Model</span>
+      </div>
+
+      <div style="text-align:center; color:var(--muted); font-size:20px;">↓</div>
+
+      <div class="workflow-step">
+        <div class="step-num" style="background:#00d4b4; color:#000;">3</div>
+        <div>
+          <div style="font-size:15px; font-weight:700; margin-bottom:4px;">3 AI Agents Collaborate on Your Case</div>
+          <div style="font-size:13px; color:var(--muted);">Risk Agent + Mental Health Agent + Medication Agent work together using your <strong style="color:var(--text);">health memory</strong>. They create a personalized action plan — remembering past visits, medications, and patterns.</div>
+        </div>
+        <span class="tech-tag tag-green" style="flex-shrink:0; align-self:center;">Agentic AI</span>
+      </div>
+
+      <div style="text-align:center; color:var(--muted); font-size:20px;">↓</div>
+
+      <div class="workflow-step hitl-card">
+        <div class="step-num" style="background:#f59e0b;">4</div>
+        <div>
+          <div style="font-size:15px; font-weight:700; margin-bottom:4px;">⚠️ YOU Approve Critical Actions</div>
+          <div style="font-size:13px; color:var(--muted);">AI never acts alone on important decisions. It asks: <em style="color:#f59e0b;">"Should I book Dr. Sharma for tomorrow 10am? [YES / NO]"</em> — you decide. Only after your YES does anything happen. <strong style="color:var(--text);">Human always stays in control.</strong></div>
+        </div>
+        <span class="tech-tag tag-yellow" style="flex-shrink:0; align-self:center;">HITL</span>
+      </div>
+
+      <div style="text-align:center; color:var(--muted); font-size:20px;">↓</div>
+
+      <div class="workflow-step">
+        <div class="step-num" style="background:#f7794f;">5</div>
+        <div>
+          <div style="font-size:15px; font-weight:700; margin-bottom:4px;">Automation Executes & Monitors</div>
+          <div style="font-size:13px; color:var(--muted);">After your approval: appointment booked, medication reminders set, weekly health report sent to your doctor, emergency alerts configured — all automated, all logged, all auditable.</div>
+        </div>
+        <span class="tech-tag tag-orange" style="flex-shrink:0; align-self:center;">Automation</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     PIPELINE — 3 TECHNOLOGIES
+════════════════════════════════════════ -->
+<section id="pipeline">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:56px;">
+      <span class="sec-label">The Technology</span>
+      <h2 class="sec-title">Three Pillars. One Unified Platform.</h2>
+      <p class="sec-sub" style="max-width:520px; margin:12px auto 0;">Each technology does what the others can't. Together they solve what no single tool can.</p>
+    </div>
+
+    <div class="pipeline-grid" style="display:grid; grid-template-columns:1fr 48px 1fr 48px 1fr; align-items:center; gap:0;">
+
+      <div class="card pipeline-card pipeline-ml" style="padding:28px;">
+        <div style="width:48px;height:48px;background:rgba(79,142,247,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px;">🧠</div>
+        <div style="font-size:17px; font-weight:800; margin-bottom:8px;">Machine Learning</div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:18px; line-height:1.7;">Trained on thousands of health records. Finds patterns humans miss. Predicts disease risk before symptoms get severe. Shows confidence score + reason — never a black box.</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <span class="tech-tag tag-blue">Risk Prediction</span>
+          <span class="tech-tag tag-blue">Pattern Recognition</span>
+          <span class="tech-tag tag-blue">NLP Symptoms</span>
+          <span class="tech-tag tag-blue">Confidence Score</span>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:center;">
+        <div style="width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px;">→</div>
+      </div>
+
+      <div class="card pipeline-card pipeline-ai" style="padding:28px;">
+        <div style="width:48px;height:48px;background:rgba(124,92,216,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px;">⚡</div>
+        <div style="font-size:17px; font-weight:800; margin-bottom:8px;">Agentic AI</div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:18px; line-height:1.7;">3 specialized AI agents reason autonomously. They plan steps, use tools, share memory, and collaborate — like a team of doctors working on your case. They suggest, never force.</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <span class="tech-tag tag-purple">Multi-Agent</span>
+          <span class="tech-tag tag-purple">Health Memory</span>
+          <span class="tech-tag tag-purple">Tool Use</span>
+          <span class="tech-tag tag-purple">Planning</span>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:center;">
+        <div style="width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px;">→</div>
+      </div>
+
+      <div class="card pipeline-card pipeline-auto" style="padding:28px;">
+        <div style="width:48px;height:48px;background:rgba(0,212,180,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px;">🔄</div>
+        <div style="font-size:17px; font-weight:800; margin-bottom:8px;">Automation</div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:18px; line-height:1.7;">After you approve, automation handles the rest — books appointments, sends reminders, alerts doctors, generates weekly reports. Zero manual effort, 100% auditable.</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <span class="tech-tag tag-green">Auto Reminders</span>
+          <span class="tech-tag tag-green">Doctor Reports</span>
+          <span class="tech-tag tag-green">Scheduling</span>
+          <span class="tech-tag tag-green">Alerts</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     UNIQUE FEATURES — 11 features
+════════════════════════════════════════ -->
+<section id="unique" style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:56px;">
+      <span class="sec-label">Why We Are Different</span>
+      <h2 class="sec-title">What No Competitor Has</h2>
+      <p class="sec-sub" style="max-width:540px; margin:12px auto 0;">11 unique features — individually impressive, together unstoppable.</p>
+    </div>
+
+    <div class="features-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
+
+      <div class="unique-card" style="border-top:3px solid #4f8ef7;">
+        <div style="font-size:26px; margin-bottom:12px;">🔍</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">Explainability Layer</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">AI tells you WHY — not just WHAT. "Risk due to BP trend + family history + sleep pattern." Most tools give a number. We give a reason.</div>
+        <span class="tech-tag tag-blue" style="margin-top:12px; display:inline-block;">Transparent AI</span>
+      </div>
+
+      <div class="unique-card" style="border-top:3px solid #7c5cd8;">
+        <div style="font-size:26px; margin-bottom:12px;">🧠</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">Health Memory</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">Agent remembers every visit, medication, and health event. Advice improves over time. Like a doctor who never forgets your file.</div>
+        <span class="tech-tag tag-purple" style="margin-top:12px; display:inline-block;">Personalized</span>
+      </div>
+
+      <div class="unique-card" style="border-top:3px solid #00d4b4;">
+        <div style="font-size:26px; margin-bottom:12px;">🤝</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">Multi-Agent Collaboration</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">3 AI experts — Risk, Mental Health, Medication — work together on your case simultaneously. A team of AI doctors, not a single bot.</div>
+        <span class="tech-tag tag-green" style="margin-top:12px; display:inline-block;">Team AI</span>
+      </div>
+
+      <div class="unique-card" style="border-top:3px solid #f59e0b;">
+        <div style="font-size:26px; margin-bottom:12px;">📊</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">Confidence Score</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">Every prediction shows "I am 84% confident." If uncertain, AI says so — "Please see a doctor." Honest AI builds real trust.</div>
+        <span class="tech-tag tag-yellow" style="margin-top:12px; display:inline-block;">Trustworthy</span>
+      </div>
+
+      <div class="unique-card hitl-card" style="border-top:3px solid #f59e0b;">
+        <div style="font-size:26px; margin-bottom:12px;">🧑‍💼</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">Human-in-the-Loop</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">Critical decisions need YOUR approval. AI suggests booking Dr. Sharma — YOU say yes or no. No critical action ever happens without your permission.</div>
+        <span class="tech-tag tag-yellow" style="margin-top:12px; display:inline-block;">Responsible AI</span>
+      </div>
+
+      <div class="unique-card" style="border-top:3px solid #4f8ef7;">
+        <div style="font-size:26px; margin-bottom:12px;">🗣️</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">Vernacular Voice Input</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">Speak in Hindi, Tamil, Telugu. No typing. No jargon. Rural India can access advanced AI health support in their own language.</div>
+        <span class="tech-tag tag-blue" style="margin-top:12px; display:inline-block;">Rural Ready</span>
+      </div>
+
+      <div class="unique-card" style="border-top:3px solid #25d366;">
+        <div style="font-size:26px; margin-bottom:12px;">📱</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">WhatsApp-First Access</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">No app download needed. Works directly on WhatsApp. Every Indian has WhatsApp — zero friction, maximum reach.</div>
+        <span class="tech-tag tag-green" style="margin-top:12px; display:inline-block;">Zero Friction</span>
+      </div>
+
+      <div class="unique-card" style="border-top:3px solid #f7794f;">
+        <div style="font-size:26px; margin-bottom:12px;">🏥</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">Family Health Graph</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">ML learns from your whole family's health history. Hereditary risk prediction — if your father had diabetes, your risk is recalculated automatically.</div>
+        <span class="tech-tag tag-orange" style="margin-top:12px; display:inline-block;">Genetic Risk</span>
+      </div>
+
+      <div class="unique-card" style="border-top:3px solid #7c5cd8;">
+        <div style="font-size:26px; margin-bottom:12px;">🔐</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">Privacy-First Design</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">Your data stays yours. DPDP Act + GDPR compliant. Nothing shared without consent. Edge ML for sensitive computations.</div>
+        <span class="tech-tag tag-purple" style="margin-top:12px; display:inline-block;">Data Safe</span>
+      </div>
+
+      <div class="unique-card" style="border-top:3px solid #00d4b4;">
+        <div style="font-size:26px; margin-bottom:12px;">🎯</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">Preventive Health Score</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">Daily score 0–100, like a credit score for health. Gamified and shareable. Motivates consistent healthy behaviour.</div>
+        <span class="tech-tag tag-green" style="margin-top:12px; display:inline-block;">Gamified</span>
+      </div>
+
+      <div class="unique-card" style="border-top:3px solid #4f8ef7;">
+        <div style="font-size:26px; margin-bottom:12px;">🏛️</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">Ayushman Bharat Integration</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">Connected to India's largest health scheme. Auto-checks coverage, hospital availability, and scheme benefits — right inside the app.</div>
+        <span class="tech-tag tag-blue" style="margin-top:12px; display:inline-block;">Govt Scheme</span>
+      </div>
+
+      <div class="unique-card" style="border-top:3px solid #f7794f;">
+        <div style="font-size:26px; margin-bottom:12px;">📈</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:6px;">Population Health Insights</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">Anonymized trends → city-level health maps. Sold to state governments for public health planning. Additional B2G revenue stream.</div>
+        <span class="tech-tag tag-orange" style="margin-top:12px; display:inline-block;">B2G Impact</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SDG IMPACT
+════════════════════════════════════════ -->
+<section id="features">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:56px;">
+      <span class="sec-label">SDG Goal 3 Impact</span>
+      <h2 class="sec-title">The Problem We Are Solving</h2>
+      <p class="sec-sub" style="max-width:520px; margin:12px auto 0;">Real numbers. Real people. Real impact — in India.</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:20px;">
+      <div class="card" style="padding:28px;">
+        <div style="font-size:36px; font-weight:900; color:#ef4444; margin-bottom:8px;">70%</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:8px;">Late Disease Detection</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">7 in 10 rural patients reach hospital only at critical stage. No proactive AI early-warning system existed — until now.</div>
+      </div>
+      <div class="card" style="padding:28px;">
+        <div style="font-size:36px; font-weight:900; color:#f59e0b; margin-bottom:8px;">150M+</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:8px;">Mental Health Crisis</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">Over 150 million Indians suffer from mental health issues. 80% never get help due to stigma and lack of accessible tools.</div>
+      </div>
+      <div class="card" style="padding:28px;">
+        <div style="font-size:36px; font-weight:900; color:#7c5cd8; margin-bottom:8px;">50%</div>
+        <div style="font-size:15px; font-weight:700; margin-bottom:8px;">Medication Non-Adherence</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.7;">Half of all chronic disease patients miss their medication regularly — leading to 30% higher hospital readmissions and preventable deaths.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     PRICING
+════════════════════════════════════════ -->
+<section id="pricing" style="background:var(--surface); border-top:1px solid var(--border);">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:56px;">
+      <span class="sec-label">Simple Pricing</span>
+      <h2 class="sec-title">Choose Your Plan</h2>
+      <p class="sec-sub" style="max-width:440px; margin:12px auto 0;">Start free. Scale when you're ready.</p>
+    </div>
+    <div class="pricing-grid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:900px; margin:0 auto;">
+
+      <div class="card" style="padding:28px;">
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Starter</div>
+        <div style="font-size:34px; font-weight:900; margin-bottom:4px;">₹0 <span style="font-size:14px; font-weight:400; color:var(--muted);">/ month</span></div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:22px;">Explore the platform free.</div>
+        <ul style="list-style:none; margin-bottom:24px; display:flex; flex-direction:column; gap:10px;">
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> 5 health analyses/month</li>
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> 1 AI agent</li>
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> Basic ML predictions</li>
+          <li style="font-size:13px; display:flex; gap:8px; color:var(--muted);"><span>–</span> Family health graph</li>
+          <li style="font-size:13px; display:flex; gap:8px; color:var(--muted);"><span>–</span> Automation workflows</li>
+        </ul>
+        <a href="#" class="btn-outline" style="width:100%; text-align:center; display:block;">Get Started Free</a>
+      </div>
+
+      <div class="card pricing-featured" style="padding:28px;">
+        <div style="position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#4f8ef7,#7c5cd8); color:#fff; font-size:10px; font-weight:700; letter-spacing:1px; padding:4px 16px; border-radius:20px; white-space:nowrap;">MOST POPULAR</div>
+        <div style="font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Pro</div>
+        <div style="font-size:34px; font-weight:900; margin-bottom:4px;">₹299 <span style="font-size:14px; font-weight:400; color:var(--muted);">/ month</span></div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:22px;">Full AI health intelligence.</div>
+        <ul style="list-style:none; margin-bottom:24px; display:flex; flex-direction:column; gap:10px;">
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> Unlimited analyses</li>
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> All 3 AI agents</li>
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> Family health graph</li>
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> Smart automation</li>
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> Ayushman Bharat integration</li>
+        </ul>
+        <a href="#" class="btn-primary" style="width:100%; text-align:center; display:block;">Start Pro Plan →</a>
+      </div>
+
+      <div class="card" style="padding:28px;">
+        <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Enterprise</div>
+        <div style="font-size:34px; font-weight:900; margin-bottom:4px;">Custom</div>
+        <div style="font-size:13px; color:var(--muted); margin-bottom:22px;">For hospitals & organisations.</div>
+        <ul style="list-style:none; margin-bottom:24px; display:flex; flex-direction:column; gap:10px;">
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> Everything in Pro</li>
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> Hospital dashboard</li>
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> Custom ML model training</li>
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> Population insights API</li>
+          <li style="font-size:13px; display:flex; gap:8px;"><span style="color:#00d4b4;">✓</span> Dedicated support + SLA</li>
+        </ul>
+        <a href="#" class="btn-outline" style="width:100%; text-align:center; display:block;">Contact Sales →</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:40px; margin-bottom:40px;">
+      <div>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;">H</div>
+          <div style="font-size:16px; font-weight:800;">HealthSense AI</div>
+        </div>
+        <p style="font-size:13px; color:var(--muted); line-height:1.8; max-width:280px;">Proactive health intelligence powered by ML, Agentic AI, and Automation. SDG Goal 3 — Good Health for everyone.</p>
+        <div style="display:flex; gap:12px; margin-top:18px;">
+          <a href="https://linkedin.com" target="_blank" style="width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;text-decoration:none;transition:border-color 0.2s;" title="LinkedIn">in</a>
+          <a href="https://github.com" target="_blank" style="width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;text-decoration:none;" title="GitHub">GH</a>
+          <a href="https://twitter.com" target="_blank" style="width:36px;height:36px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;text-decoration:none;" title="Twitter">𝕏</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px; font-weight:700; color:var(--text); letter-spacing:1px; text-transform:uppercase; margin-bottom:16px;">Product</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <a href="#how-it-works" style="font-size:13px; color:var(--muted); text-decoration:none;">How It Works</a>
+          <a href="#features" style="font-size:13px; color:var(--muted); text-decoration:none;">Features</a>
+          <a href="pages/ml-demo.html" style="font-size:13px; color:var(--muted); text-decoration:none;">Live ML Demo</a>
+          <a href="pages/patient-dashboard.html" style="font-size:13px; color:var(--muted); text-decoration:none;">Dashboard</a>
+          <a href="#pricing" style="font-size:13px; color:var(--muted); text-decoration:none;">Pricing</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px; font-weight:700; color:var(--text); letter-spacing:1px; text-transform:uppercase; margin-bottom:16px;">Technology</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <a href="#pipeline" style="font-size:13px; color:var(--muted); text-decoration:none;">ML Engine</a>
+          <a href="#pipeline" style="font-size:13px; color:var(--muted); text-decoration:none;">Agentic AI</a>
+          <a href="#pipeline" style="font-size:13px; color:var(--muted); text-decoration:none;">Automation</a>
+          <a href="#unique" style="font-size:13px; color:var(--muted); text-decoration:none;">Why Unique</a>
+          <a href="#unique" style="font-size:13px; color:var(--muted); text-decoration:none;">Ayushman API</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px; font-weight:700; color:var(--text); letter-spacing:1px; text-transform:uppercase; margin-bottom:16px;">SDG Impact</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <span style="font-size:13px; color:var(--muted);">Goal 3 — Good Health</span>
+          <span style="font-size:13px; color:var(--muted);">Rural India Reach</span>
+          <span style="font-size:13px; color:var(--muted);">Mental Health Access</span>
+          <span style="font-size:13px; color:var(--muted);">Preventive Care AI</span>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border); padding-top:22px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div style="font-size:12px; color:var(--muted);">© 2025 HealthSense AI. Built for SDG Goal 3 — Good Health &amp; Well-Being.</div>
+      <div style="display:flex; gap:16px;">
+        <a href="#" style="font-size:12px; color:var(--muted); text-decoration:none;">Privacy Policy</a>
+        <a href="#" style="font-size:12px; color:var(--muted); text-decoration:none;">Terms of Use</a>
+        <a href="#" style="font-size:12px; color:var(--muted); text-decoration:none;">DPDP Compliant</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Smooth navbar shrink on scroll
+  window.addEventListener('scroll', () => {
+    const nav = document.querySelector('.navbar');
+    if (window.scrollY > 40) {
+      nav.style.height = '56px';
+      nav.style.background = 'rgba(5,9,20,0.97)';
+    } else {
+      nav.style.height = '66px';
+      nav.style.background = 'rgba(5,9,20,0.85)';
+    }
+  });
+
+  // Intersection Observer for fade-up on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+        entry.target.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.card, .unique-card, .workflow-step').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    observer.observe(el);
+  });
+</script>
+<script src="js/main.js"></script>
+</body>
+</html>

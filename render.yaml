@@ -24,7 +24,7 @@ services:
     name: healthsense-ai-frontend
     runtime: static
     buildCommand: echo "Static site — no build needed"
-    staticPublishPath: .
+    staticPublishPath: frontend
     routes:
       - type: rewrite
         source: /*
