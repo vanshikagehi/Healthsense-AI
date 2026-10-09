@@ -353,8 +353,11 @@
     </section>
 
     <!-- SECTION: AI REPORTS -->
-    <section id="reports">
-      <div style="font-size:16px;font-weight:800;margin-bottom:16px;">📋 Latest AI-Generated Reports</div>
+    <section id="reports" style="margin-bottom:32px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-size:16px;font-weight:800;">📋 Latest AI-Generated Reports</div>
+        <button onclick="downloadAllReports()" class="btn btn-outline btn-sm">📥 Download All</button>
+      </div>
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
           <span style="font-size:22px;">📄</span>
@@ -363,9 +366,10 @@
             <div style="font-size:12px;color:var(--muted);">AI-generated report: BP trends, glucose readings, sleep data, medication adherence. Risk escalation flagged.</div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px;">Generated today, 7:00 AM</div>
           </div>
-          <div style="display:flex;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;">
             <span class="tag tag-red">Urgent</span>
-            <button onclick="window.HS && HS.showToast('Report downloaded', 'success')" class="btn btn-outline btn-sm">Download</button>
+            <button onclick="downloadReport('Priya Verma')" class="btn btn-outline btn-sm">📥 Download</button>
+            <button onclick="openPatientDetail('Priya Verma',78)" class="btn btn-primary btn-sm">View</button>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
@@ -375,9 +379,10 @@
             <div style="font-size:12px;color:var(--muted);">10-day upward BP trend. Medication adherence dropped. Agent recommends dosage review.</div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px;">Generated today, 8:10 AM</div>
           </div>
-          <div style="display:flex;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;">
             <span class="tag tag-yellow">Review</span>
-            <button onclick="window.HS && HS.showToast('Report downloaded', 'success')" class="btn btn-outline btn-sm">Download</button>
+            <button onclick="downloadReport('Rahul Mehta')" class="btn btn-outline btn-sm">📥 Download</button>
+            <button onclick="openPatientDetail('Rahul Mehta',62)" class="btn btn-primary btn-sm">View</button>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
@@ -387,9 +392,10 @@
             <div style="font-size:12px;color:var(--muted);">Excellent adherence (96%). Diabetes well-controlled. No risk escalation. Routine follow-up recommended.</div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px;">Generated yesterday, 9:00 PM</div>
           </div>
-          <div style="display:flex;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;">
             <span class="tag tag-green">Stable</span>
-            <button onclick="window.HS && HS.showToast('Report downloaded', 'success')" class="btn btn-outline btn-sm">Download</button>
+            <button onclick="downloadReport('Arjun Singh')" class="btn btn-outline btn-sm">📥 Download</button>
+            <button onclick="openPatientDetail('Arjun Singh',28)" class="btn btn-primary btn-sm">View</button>
           </div>
         </div>
       </div>
@@ -705,12 +711,149 @@
     showDrToast('Appointment cancelled for ' + name, 'info');
   }
 
+  function downloadReport(name) {
+    const content = [
+      'HealthSense AI — Patient Report',
+      '================================',
+      'Patient: ' + name,
+      'Generated: ' + new Date().toLocaleString(),
+      '',
+      'AI Risk Assessment:',
+      '  ML Model: Advanced NLP + Gradient Boosting Ensemble',
+      '  Confidence: 84%',
+      '',
+      'Key Findings:',
+      '  • Vitals trend — monitored 24/7 by Risk Agent',
+      '  • Medication adherence — tracked by Automation Agent',
+      '  • Mental health signals — assessed by Mental Health Agent',
+      '',
+      'Recommended Next Steps (pending doctor approval):',
+      '  • Follow-up consultation within 48 hours',
+      '  • Medication dosage review',
+      '',
+      '-- HealthSense AI --'
+    ].join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = name.replace(/\s+/g,'_') + '_Report.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+    showDrToast('Report downloaded for ' + name + ' ✓', 'success');
+  }
+
+  function downloadAllReports() {
+    ['Priya Verma','Rahul Mehta','Arjun Singh'].forEach((n, i) => {
+      setTimeout(() => downloadReport(n), i * 500);
+    });
+  }
+
   function rescheduleAppt(name) {
-    showDrToast('Reschedule flow coming soon for ' + name, 'info');
+    const m = document.createElement('div');
+    m.id = 'reschedule-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(5,9,20,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;';
+    m.innerHTML = `
+      <div style="background:#0d1526;border:1px solid #1e2d4a;border-radius:18px;padding:28px;max-width:400px;width:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+          <div style="font-size:16px;font-weight:800;">↻ Reschedule — ${name}</div>
+          <button onclick="document.getElementById('reschedule-modal').remove()" style="background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;width:30px;height:30px;border-radius:8px;font-size:14px;cursor:pointer;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--muted);">NEW DATE</label>
+            <input type="date" id="rs-date" style="width:100%;margin-top:5px;background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;padding:10px 12px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;"/>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--muted);">TIME SLOT</label>
+            <select id="rs-time" style="width:100%;margin-top:5px;background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;padding:10px 12px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;">
+              <option>9:00 AM</option><option>10:00 AM</option><option>11:00 AM</option>
+              <option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="confirmReschedule('${name}')" style="width:100%;margin-top:16px;padding:11px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">Confirm Reschedule</button>
+      </div>`;
+    document.body.appendChild(m);
+    const tom = new Date(); tom.setDate(tom.getDate()+1);
+    document.getElementById('rs-date').value = tom.toISOString().split('T')[0];
+  }
+
+  function confirmReschedule(name) {
+    const date = document.getElementById('rs-date').value;
+    const time = document.getElementById('rs-time').value;
+    document.getElementById('reschedule-modal').remove();
+    showDrToast('Rescheduled for ' + name + ' → ' + date + ' at ' + time + ' ✓', 'success');
   }
 
   function openAddApptModal() {
-    showDrToast('Add appointment modal coming soon', 'info');
+    const m = document.createElement('div');
+    m.id = 'add-appt-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(5,9,20,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;';
+    m.innerHTML = `
+      <div style="background:#0d1526;border:1px solid #1e2d4a;border-radius:18px;padding:28px;max-width:420px;width:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+          <div style="font-size:16px;font-weight:800;">📅 Add Appointment</div>
+          <button onclick="document.getElementById('add-appt-modal').remove()" style="background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;width:30px;height:30px;border-radius:8px;font-size:14px;cursor:pointer;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--muted);">PATIENT NAME</label>
+            <input id="aa-name" type="text" placeholder="Enter patient name" style="width:100%;margin-top:5px;background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;padding:10px 12px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;"/>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--muted);">DATE</label>
+              <input id="aa-date" type="date" style="width:100%;margin-top:5px;background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;padding:10px 12px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--muted);">TIME</label>
+              <select id="aa-time" style="width:100%;margin-top:5px;background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;padding:10px 12px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;">
+                <option>9:00 AM</option><option>10:00 AM</option><option>11:00 AM</option>
+                <option>2:00 PM</option><option>3:00 PM</option><option>4:00 PM</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--muted);">REASON</label>
+            <input id="aa-reason" type="text" placeholder="e.g. Monthly check-up" style="width:100%;margin-top:5px;background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;padding:10px 12px;border-radius:8px;font-size:13px;font-family:inherit;outline:none;"/>
+          </div>
+        </div>
+        <button onclick="submitAddAppt()" style="width:100%;margin-top:16px;padding:11px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">Add Appointment</button>
+      </div>`;
+    document.body.appendChild(m);
+    const tom = new Date(); tom.setDate(tom.getDate()+1);
+    document.getElementById('aa-date').value = tom.toISOString().split('T')[0];
+  }
+
+  function submitAddAppt() {
+    const name   = document.getElementById('aa-name').value.trim();
+    const date   = document.getElementById('aa-date').value;
+    const time   = document.getElementById('aa-time').value;
+    const reason = document.getElementById('aa-reason').value.trim() || 'General appointment';
+    if (!name) { showDrToast('Please enter patient name', 'error'); return; }
+    document.getElementById('add-appt-modal').remove();
+    const card = document.createElement('div');
+    card.className = 'appt-card';
+    card.dataset.type = 'manual';
+    card.style.cssText = 'display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid rgba(0,212,180,0.3);border-radius:14px;border-left:4px solid #00d4b4;';
+    card.innerHTML = `
+      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0;color:#fff;">${name.charAt(0)}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+          <span style="font-size:13px;font-weight:700;">${name}</span>
+          <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(124,92,216,0.18);color:#7c5cd8;font-weight:700;">👤 Manual</span>
+          <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(0,212,180,0.18);color:#00d4b4;font-weight:700;">✓ Confirmed</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);">${reason}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 ${date} &nbsp;·&nbsp; 🕐 ${time}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button onclick="showDrToast('Opening notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+        <button onclick="rescheduleAppt('${name}')" class="btn btn-outline btn-sm">↻ Reschedule</button>
+      </div>`;
+    document.getElementById('appt-list').appendChild(card);
+    showDrToast('Appointment added for ' + name + ' ✓', 'success');
   }
 
   // ── Doctor Settings modal ──
