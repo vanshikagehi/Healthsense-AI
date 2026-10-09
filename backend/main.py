@@ -82,7 +82,7 @@ def rate_limit(request: Request):
         window = {"count": 0, "start": now}
     window["count"] += 1
     request_counts[ip] = window
-    limit = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
+    limit = int(os.getenv("RATE_LIMIT_PER_MINUTE", "200"))
     if window["count"] > limit:
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait 60 seconds.")
 
