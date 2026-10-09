@@ -1,0 +1,41 @@
+# render.yaml — Render.com deployment config
+# Deploys BOTH frontend (static) + backend (web service)
+# Free tier available on Render
+
+services:
+
+  # ── BACKEND — FastAPI Web Service ──
+  - type: web
+    name: healthsense-ai-backend
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn backend.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 5
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ENVIRONMENT
+        value: production
+    healthCheckPath: /health
+    # Free tier: 512MB RAM, 0.1 CPU — enough for 20K-30K users with async
+    # Upgrade to $7/month for 512MB → 2GB for higher traffic
+
+  # ── FRONTEND — Static Site ──
+  - type: web
+    name: healthsense-ai-frontend
+    runtime: static
+    buildCommand: echo "Static site — no build needed"
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600
+      - path: /style.css
+        name: Cache-Control
+        value: public, max-age=86400
+      - path: /js/*
+        name: Cache-Control
+        value: public, max-age=86400

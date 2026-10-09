@@ -1,0 +1,44 @@
+# Bob artifacts (lean canvas etc - keep locally, don't deploy)
+.bob/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# ML model files (large - store separately)
+backend/models/*.pkl
+backend/models/*.joblib
+backend/health_dataset.csv
+
+# TF.js model (generated - rebuild on deploy)
+js/tfjs_model/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Vercel (using Render instead)
+.vercel/

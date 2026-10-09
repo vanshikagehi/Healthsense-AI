@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Doctor Dashboard — HealthSense AI</title>
+  <link rel="stylesheet" href="../style.css"/>
+  <style>
+    .patient-row {
+      display: grid;
+      grid-template-columns: 40px 1fr 100px 110px 90px 120px;
+      gap: 16px; align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+      font-size: 13px;
+    }
+    .patient-row:hover { background: rgba(79,142,247,0.04); }
+    .risk-pill {
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; text-align: center;
+    }
+    .risk-high   { background: rgba(239,68,68,0.15);  color: #ef4444; }
+    .risk-medium { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .risk-low    { background: rgba(0,212,180,0.15);  color: #00d4b4; }
+
+    .alert-item {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 14px 16px;
+      background: var(--surface2); border-radius: 10px;
+      border-left: 3px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .alert-item.urgent { border-left-color: #ef4444; }
+    .alert-item.warning { border-left-color: #f59e0b; }
+    .alert-item.info { border-left-color: #4f8ef7; }
+
+    .stat-ring {
+      width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="../index.html" class="nav-logo">
+    <div class="nav-logo-icon">H</div>
+    <div class="nav-logo-text">Health<span>Sense</span> AI</div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#patients" class="active">Patients</a></li>
+    <li><a href="#alerts">Alerts</a></li>
+    <li><a href="#analytics">Analytics</a></li>
+    <li><a href="#reports">Reports</a></li>
+  </ul>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <a href="patient-dashboard.html" class="btn btn-outline btn-sm">Switch: Patient View</a>
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;">
+      <div style="width:28px;height:28px;background:linear-gradient(135deg,#00d4b4,#4f8ef7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">D</div>
+      <span style="font-size:13px;font-weight:600;">Dr. Sharma</span>
+    </div>
+  </div>
+</nav>
+
+<!-- LAYOUT -->
+<div style="display:grid;grid-template-columns:220px 1fr;min-height:100vh;padding-top:66px;">
+
+  <!-- SIDEBAR -->
+  <aside style="background:var(--surface);border-right:1px solid var(--border);padding:20px 0;position:sticky;top:66px;height:calc(100vh - 66px);overflow-y:auto;">
+    <div style="padding:0 16px 16px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:42px;height:42px;background:linear-gradient(135deg,#00d4b4,#4f8ef7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;">D</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;">Dr. Priya Sharma</div>
+          <div style="font-size:11px;color:var(--muted);">Endocrinologist</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <div style="flex:1;padding:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;text-align:center;">
+          <div style="font-size:16px;font-weight:800;color:#ef4444;">3</div>
+          <div style="font-size:10px;color:var(--muted);">Urgent</div>
+        </div>
+        <div style="flex:1;padding:8px;background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.2);border-radius:8px;text-align:center;">
+          <div style="font-size:16px;font-weight:800;color:#4f8ef7;">18</div>
+          <div style="font-size:10px;color:var(--muted);">Patients</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:0 20px 6px;">Navigation</div>
+    <ul style="list-style:none;padding:0 10px;margin-bottom:16px;">
+      <li><a href="#patients" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--accent);background:rgba(79,142,247,0.1);font-size:13px;font-weight:600;"><span>👥</span> All Patients</a></li>
+      <li><a href="#alerts"   style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>🚨</span> Alerts <span style="margin-left:auto;background:rgba(239,68,68,0.2);color:#ef4444;font-size:10px;padding:1px 7px;border-radius:10px;">3</span></a></li>
+      <li><a href="#analytics" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📊</span> Analytics</a></li>
+      <li><a href="#reports"   style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📋</span> AI Reports</a></li>
+      <li><a href="#"          style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📅</span> Appointments</a></li>
+      <li><a href="#"          style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>⚙️</span> Settings</a></li>
+    </ul>
+
+    <div style="padding:14px 16px;margin:8px 10px 0;background:rgba(0,212,180,0.06);border:1px solid rgba(0,212,180,0.2);border-radius:10px;">
+      <div style="font-size:11px;font-weight:700;color:#00d4b4;margin-bottom:4px;">🤖 AI Monitoring</div>
+      <div style="font-size:11px;color:var(--muted);">18 patients being monitored 24/7 by AI agents</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main style="padding:28px;overflow-y:auto;">
+
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h1 style="font-size:22px;font-weight:800;margin-bottom:4px;">Good morning, Dr. Sharma 👋</h1>
+        <p style="font-size:13px;color:var(--muted);">AI agents have flagged 3 urgent cases today · Last updated 4 min ago</p>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="window.HS && HS.showToast('All patient reports sent via email', 'success')" class="btn btn-outline btn-sm">📤 Send All Reports</button>
+        <button class="btn btn-primary btn-sm">+ Add Patient</button>
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;">
+      <div class="metric-card">
+        <div class="metric-label">Total Patients</div>
+        <div class="metric-value" style="color:#4f8ef7;">18</div>
+        <div class="metric-change up">↑ 2 new this week</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">High Risk</div>
+        <div class="metric-value" style="color:#ef4444;">3</div>
+        <div style="font-size:12px;color:#ef4444;margin-top:3px;">Needs attention today</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Avg. Adherence</div>
+        <div class="metric-value" style="color:#00d4b4;">87%</div>
+        <div class="metric-change up">↑ +3% from last week</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">AI Reports Sent</div>
+        <div class="metric-value" style="color:#7c5cd8;">142</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px;">This month (auto)</div>
+      </div>
+    </div>
+
+    <!-- SECTION: URGENT ALERTS -->
+    <section id="alerts" style="margin-bottom:32px;">
+      <div style="font-size:16px;font-weight:800;margin-bottom:16px;">🚨 Urgent AI Alerts <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px;">Flagged by ML Engine</span></div>
+
+      <div class="alert-item urgent">
+        <div class="stat-ring" style="background:rgba(239,68,68,0.1);">⚠️</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:3px;">Priya Verma — Diabetes Risk 78%</div>
+          <div style="font-size:12px;color:var(--muted);">ML engine flagged polydipsia + fatigue + blurred vision + family history. Awaiting doctor review. Confidence: 84%.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">Today, 6:42 AM · Risk Agent</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+          <button onclick="window.HS && HS.showToast('Priya Verma appointment confirmed for 10 AM', 'success')" class="btn btn-danger btn-sm">Urgent Consult</button>
+          <button onclick="window.HS && HS.showToast('Report opened', 'info')" class="btn btn-outline btn-sm">View Report</button>
+        </div>
+      </div>
+
+      <div class="alert-item warning">
+        <div class="stat-ring" style="background:rgba(245,158,11,0.1);">📈</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:3px;">Rahul Mehta — BP Trend Rising</div>
+          <div style="font-size:12px;color:var(--muted);">Systolic BP increased from 125 to 148 over 10 days. Medication adherence dropped to 61%. Auto-reminder sent.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">Today, 8:10 AM · Medication Agent</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+          <button onclick="window.HS && HS.showToast('Message sent to Rahul Mehta', 'success')" class="btn btn-warning btn-sm">Send Message</button>
+          <button class="btn btn-outline btn-sm">View Trend</button>
+        </div>
+      </div>
+
+      <div class="alert-item info">
+        <div class="stat-ring" style="background:rgba(79,142,247,0.1);">🧘</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:3px;">Sneha Patel — Mental Health Signal</div>
+          <div style="font-size:12px;color:var(--muted);">Mental Health Agent detected disrupted sleep pattern (3 nights) + reduced activity. Suggests mild anxiety check-in.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">Yesterday, 11:30 PM · Mental Health Agent</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+          <button onclick="window.HS && HS.showToast('Check-in message sent to Sneha', 'success')" class="btn btn-primary btn-sm">Schedule Check-in</button>
+          <button class="btn btn-outline btn-sm">View Details</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: ALL PATIENTS TABLE -->
+    <section id="patients" style="margin-bottom:32px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-size:16px;font-weight:800;">👥 All Patients</div>
+        <input class="input" placeholder="🔍 Search patients..." style="width:220px;padding:8px 14px;font-size:13px;"/>
+      </div>
+
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+        <!-- Table header -->
+        <div class="patient-row" style="background:var(--surface2);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;border-bottom:1px solid var(--border);">
+          <div></div>
+          <div>Patient</div>
+          <div>Risk Level</div>
+          <div>Last Checked</div>
+          <div>Adherence</div>
+          <div>Action</div>
+        </div>
+
+        <!-- Rows -->
+        <div class="patient-row">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#ef4444,#f7794f);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;">P</div>
+          <div>
+            <div style="font-weight:600;">Priya Verma</div>
+            <div style="font-size:11px;color:var(--muted);">Diabetes Monitoring · Age 38</div>
+          </div>
+          <div><span class="risk-pill risk-high">HIGH 78%</span></div>
+          <div style="font-size:12px;color:var(--muted);">Today, 6:42 AM</div>
+          <div>
+            <div class="progress-bar" style="width:80px;">
+              <div class="progress-fill progress-green" data-width="92" style="width:92%;"></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">92%</div>
+          </div>
+          <div><button onclick="openPatientDetail('Priya Verma', 78)" class="btn btn-danger btn-sm">Review</button></div>
+        </div>
+
+        <div class="patient-row">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#f7794f);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;">R</div>
+          <div>
+            <div style="font-weight:600;">Rahul Mehta</div>
+            <div style="font-size:11px;color:var(--muted);">Hypertension · Age 52</div>
+          </div>
+          <div><span class="risk-pill risk-medium">MED 62%</span></div>
+          <div style="font-size:12px;color:var(--muted);">Today, 8:10 AM</div>
+          <div>
+            <div class="progress-bar" style="width:80px;">
+              <div class="progress-fill progress-orange" data-width="61" style="width:61%;"></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">61%</div>
+          </div>
+          <div><button onclick="openPatientDetail('Rahul Mehta', 62)" class="btn btn-warning btn-sm">Review</button></div>
+        </div>
+
+        <div class="patient-row">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#7c5cd8,#4f8ef7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;">S</div>
+          <div>
+            <div style="font-weight:600;">Sneha Patel</div>
+            <div style="font-size:11px;color:var(--muted);">Mental Health + Thyroid · Age 29</div>
+          </div>
+          <div><span class="risk-pill risk-medium">MED 45%</span></div>
+          <div style="font-size:12px;color:var(--muted);">Yesterday</div>
+          <div>
+            <div class="progress-bar" style="width:80px;">
+              <div class="progress-fill progress-green" data-width="88" style="width:88%;"></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">88%</div>
+          </div>
+          <div><button onclick="openPatientDetail('Sneha Patel', 45)" class="btn btn-outline btn-sm">View</button></div>
+        </div>
+
+        <div class="patient-row">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#00d4b4,#4f8ef7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;">A</div>
+          <div>
+            <div style="font-weight:600;">Arjun Singh</div>
+            <div style="font-size:11px;color:var(--muted);">Diabetes Type 2 · Age 61</div>
+          </div>
+          <div><span class="risk-pill risk-low">LOW 28%</span></div>
+          <div style="font-size:12px;color:var(--muted);">Today, 7:00 AM</div>
+          <div>
+            <div class="progress-bar" style="width:80px;">
+              <div class="progress-fill progress-green" data-width="96" style="width:96%;"></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">96%</div>
+          </div>
+          <div><button onclick="openPatientDetail('Arjun Singh', 28)" class="btn btn-outline btn-sm">View</button></div>
+        </div>
+
+        <div class="patient-row" style="border-bottom:none;">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#f7794f,#7c5cd8);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;">M</div>
+          <div>
+            <div style="font-weight:600;">Meena Joshi</div>
+            <div style="font-size:11px;color:var(--muted);">BP + Cholesterol · Age 47</div>
+          </div>
+          <div><span class="risk-pill risk-low">LOW 31%</span></div>
+          <div style="font-size:12px;color:var(--muted);">2 days ago</div>
+          <div>
+            <div class="progress-bar" style="width:80px;">
+              <div class="progress-fill progress-green" data-width="94" style="width:94%;"></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">94%</div>
+          </div>
+          <div><button onclick="openPatientDetail('Meena Joshi', 31)" class="btn btn-outline btn-sm">View</button></div>
+        </div>
+      </div>
+
+      <div style="padding:12px 18px;background:var(--surface2);border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;font-size:12px;color:var(--muted);">
+        Showing 5 of 18 patients · <a href="#" style="color:var(--accent);">View all →</a>
+      </div>
+    </section>
+
+    <!-- SECTION: ANALYTICS -->
+    <section id="analytics" style="margin-bottom:32px;">
+      <div style="font-size:16px;font-weight:800;margin-bottom:16px;">📊 AI-Powered Analytics</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+        <div class="card card-body">
+          <div style="font-size:13px;font-weight:700;margin-bottom:16px;">Patient Risk Distribution</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px;"><span>High Risk (>65%)</span><span style="color:#ef4444;font-weight:700;">3 patients</span></div>
+              <div class="progress-bar"><div class="progress-fill progress-red" data-width="17" style="width:17%;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px;"><span>Medium Risk (40–65%)</span><span style="color:#f59e0b;font-weight:700;">7 patients</span></div>
+              <div class="progress-bar"><div class="progress-fill progress-orange" data-width="39" style="width:39%;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px;"><span>Low Risk (&lt;40%)</span><span style="color:#00d4b4;font-weight:700;">8 patients</span></div>
+              <div class="progress-bar"><div class="progress-fill progress-green" data-width="44" style="width:44%;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-body">
+          <div style="font-size:13px;font-weight:700;margin-bottom:16px;">Automation Impact This Month</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:9px;">
+              <span style="font-size:13px;">Reminders Sent (auto)</span>
+              <span style="font-weight:700;color:#00d4b4;">1,247</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:9px;">
+              <span style="font-size:13px;">Reports Auto-Generated</span>
+              <span style="font-weight:700;color:#4f8ef7;">142</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:9px;">
+              <span style="font-size:13px;">Early Detections</span>
+              <span style="font-weight:700;color:#f7794f;">8</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:9px;">
+              <span style="font-size:13px;">Doctor Hours Saved</span>
+              <span style="font-weight:700;color:#7c5cd8;">~34 hrs</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: AI REPORTS -->
+    <section id="reports">
+      <div style="font-size:16px;font-weight:800;margin-bottom:16px;">📋 Latest AI-Generated Reports</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+          <span style="font-size:22px;">📄</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;">Priya Verma — Weekly Health Summary</div>
+            <div style="font-size:12px;color:var(--muted);">AI-generated report: BP trends, glucose readings, sleep data, medication adherence. Risk escalation flagged.</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">Generated today, 7:00 AM</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <span class="tag tag-red">Urgent</span>
+            <button onclick="window.HS && HS.showToast('Report downloaded', 'success')" class="btn btn-outline btn-sm">Download</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+          <span style="font-size:22px;">📄</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;">Rahul Mehta — BP Trend Analysis</div>
+            <div style="font-size:12px;color:var(--muted);">10-day upward BP trend. Medication adherence dropped. Agent recommends dosage review.</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">Generated today, 8:10 AM</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <span class="tag tag-yellow">Review</span>
+            <button onclick="window.HS && HS.showToast('Report downloaded', 'success')" class="btn btn-outline btn-sm">Download</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+          <span style="font-size:22px;">📄</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;">Arjun Singh — Monthly Progress Report</div>
+            <div style="font-size:12px;color:var(--muted);">Excellent adherence (96%). Diabetes well-controlled. No risk escalation. Routine follow-up recommended.</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">Generated yesterday, 9:00 PM</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <span class="tag tag-green">Stable</span>
+            <button onclick="window.HS && HS.showToast('Report downloaded', 'success')" class="btn btn-outline btn-sm">Download</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Patient Detail Modal -->
+<div id="patient-modal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(5,9,20,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px;">
+  <div style="background:#0d1526;border:1px solid var(--border);border-radius:18px;padding:32px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-size:17px;font-weight:800;" id="modal-name">Patient Details</div>
+      <button onclick="document.getElementById('patient-modal').style.display='none'" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script src="../js/main.js"></script>
+<script>
+  function openPatientDetail(name, risk) {
+    const modal = document.getElementById('patient-modal');
+    const riskColor = risk > 65 ? '#ef4444' : risk > 40 ? '#f59e0b' : '#00d4b4';
+    document.getElementById('modal-name').textContent = name;
+    document.getElementById('modal-body').innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px;background:var(--surface2);border-radius:10px;">
+        <div style="font-size:32px;font-weight:900;color:${riskColor};">${risk}%</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;">Risk Score</div>
+          <div style="font-size:12px;color:var(--muted);">ML Confidence: ${Math.round(risk * 0.9 + 10)}% · Updated today</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.8;padding:12px;background:rgba(79,142,247,0.06);border-radius:9px;border-left:3px solid #4f8ef7;">
+        <strong style="color:#4f8ef7;">AI Explanation:</strong><br>
+        Risk calculated from symptom patterns, vitals trend, medication adherence, and family health graph data stored in agent memory.
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button onclick="window.HS && HS.showToast('Appointment booked for ${name}', 'success');document.getElementById('patient-modal').style.display='none'" style="flex:1;padding:11px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;min-width:120px;">Book Appointment</button>
+        <button onclick="window.HS && HS.showToast('Report sent to ${name}', 'info');document.getElementById('patient-modal').style.display='none'" style="flex:1;padding:11px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:9px;font-size:13px;cursor:pointer;min-width:120px;">Send Report</button>
+      </div>
+    `;
+    modal.style.display = 'flex';
+  }
+</script>
+</body>
+</html>

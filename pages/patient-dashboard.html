@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Patient Dashboard — HealthSense AI</title>
+  <link rel="stylesheet" href="../style.css"/>
+  <style>
+    /* ── PAGE-SPECIFIC STYLES ── */
+    .health-score-ring {
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      background: conic-gradient(#4f8ef7 0% 76%, #1e2d4a 76% 100%);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .health-score-ring::before {
+      content: ''; position: absolute;
+      width: 100px; height: 100px;
+      background: var(--card); border-radius: 50%;
+    }
+    .health-score-inner {
+      position: relative; z-index: 1; text-align: center;
+    }
+
+    .agent-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px;
+      transition: border-color 0.3s;
+    }
+    .agent-card.running { border-color: rgba(79,142,247,0.5); }
+    .agent-card.idle    { border-color: var(--border); }
+
+    .chat-bubble-user {
+      background: rgba(79,142,247,0.12); border: 1px solid rgba(79,142,247,0.2);
+      border-radius: 14px 14px 4px 14px; padding: 10px 14px;
+      font-size: 13px; max-width: 80%; margin-left: auto;
+    }
+    .chat-bubble-ai {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 14px 14px 14px 4px; padding: 10px 14px;
+      font-size: 13px; max-width: 85%;
+    }
+    .chat-bubble-hitl {
+      background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.35);
+      border-radius: 12px; padding: 12px 16px; font-size: 13px;
+    }
+
+    .risk-bar-wrap { margin-bottom: 14px; }
+    .risk-label-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+
+    .med-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 16px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px;
+    }
+    .med-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .timeline-item { display: flex; gap: 14px; margin-bottom: 20px; }
+    .timeline-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      margin-top: 4px; flex-shrink: 0;
+    }
+    .timeline-line {
+      width: 2px; background: var(--border);
+      margin: 16px 0 0 5px; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+  <a href="../index.html" class="nav-logo">
+    <div class="nav-logo-icon">H</div>
+    <div class="nav-logo-text">Health<span>Sense</span> AI</div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#overview" class="active">Overview</a></li>
+    <li><a href="#risk">Risk Analysis</a></li>
+    <li><a href="#agents">AI Agents</a></li>
+    <li><a href="#medications">Medications</a></li>
+  </ul>
+  <div style="display:flex; gap:10px; align-items:center;">
+    <a href="doctor-dashboard.html" class="btn btn-outline btn-sm">Switch: Doctor View</a>
+    <a href="../pages/ml-demo.html" class="btn btn-primary btn-sm">🧠 ML Demo</a>
+    <div style="width:34px;height:34px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;cursor:pointer;">P</div>
+  </div>
+</nav>
+
+<!-- ── DASHBOARD BODY ── -->
+<div style="display:grid; grid-template-columns:220px 1fr; min-height:100vh; padding-top:66px;">
+
+  <!-- SIDEBAR -->
+  <aside style="background:var(--surface); border-right:1px solid var(--border); padding:20px 0; position:sticky; top:66px; height:calc(100vh - 66px); overflow-y:auto;">
+    <div style="padding:0 16px 16px; border-bottom:1px solid var(--border); margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;">P</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;">Priya Verma</div>
+          <div style="font-size:11px;color:var(--muted);">Patient ID: #HS-2847</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:8px 12px;background:rgba(0,212,180,0.08);border:1px solid rgba(0,212,180,0.2);border-radius:8px;display:flex;align-items:center;gap:6px;">
+        <span class="status-dot dot-green pulse-anim"></span>
+        <span style="font-size:11px;color:var(--accent3);">3 Agents Active</span>
+      </div>
+    </div>
+
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:0 20px 6px;">Main</div>
+    <ul style="list-style:none;padding:0 10px;margin-bottom:16px;">
+      <li><a href="#overview" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--accent);background:rgba(79,142,247,0.1);font-size:13px;font-weight:600;"><span>🏠</span> Overview</a></li>
+      <li><a href="#risk" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;transition:background 0.2s;"><span>⚠️</span> Risk Analysis</a></li>
+      <li><a href="#agents" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;transition:background 0.2s;"><span>⚡</span> AI Agents</a></li>
+      <li><a href="#medications" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;transition:background 0.2s;"><span>💊</span> Medications</a></li>
+      <li><a href="#chat" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;transition:background 0.2s;"><span>💬</span> AI Chat</a></li>
+    </ul>
+
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:0 20px 6px;">Health</div>
+    <ul style="list-style:none;padding:0 10px;">
+      <li><a href="#" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📈</span> Health Score</a></li>
+      <li><a href="#" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>🏥</span> Family Graph</a></li>
+      <li><a href="#" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>📋</span> Reports</a></li>
+      <li><a href="#" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);font-size:13px;"><span>⚙️</span> Settings</a></li>
+    </ul>
+
+    <div style="padding:14px 16px;margin:16px 10px 0;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.25);border-radius:10px;">
+      <div style="font-size:11px;font-weight:700;color:#f59e0b;margin-bottom:4px;">⚠️ HITL Active</div>
+      <div style="font-size:11px;color:var(--muted);">1 action awaiting your approval</div>
+      <button onclick="triggerHITL()" style="margin-top:8px;width:100%;padding:6px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;">Review Now →</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main style="padding:28px; overflow-y:auto;">
+
+    <!-- ── SECTION: OVERVIEW ── -->
+    <section id="overview" style="margin-bottom:36px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h1 style="font-size:22px;font-weight:800;margin-bottom:4px;">Good morning, Priya 👋</h1>
+          <p style="font-size:13px;color:var(--muted);">Your health agents have been monitoring since 6:00 AM · Last updated 2 min ago</p>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="HS.showToast('Report generated and sent to Dr. Sharma', 'success')" class="btn btn-outline btn-sm">📄 Weekly Report</button>
+          <button onclick="triggerHITL()" class="btn btn-warning btn-sm">⚠ 1 Approval Pending</button>
+        </div>
+      </div>
+
+      <!-- Metrics Row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+        <div class="metric-card">
+          <div class="metric-label">Health Score</div>
+          <div class="metric-value" style="color:#4f8ef7;">76<span style="font-size:16px;">/100</span></div>
+          <div class="metric-change up">↑ +4 from yesterday</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Diabetes Risk</div>
+          <div class="metric-value" style="color:#f7794f;">78<span style="font-size:16px;">%</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">Confidence: 84%</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Medication Adherence</div>
+          <div class="metric-value" style="color:#00d4b4;">92<span style="font-size:16px;">%</span></div>
+          <div class="metric-change up">↑ This week</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">BP Status</div>
+          <div class="metric-value" style="color:#f59e0b;">130<span style="font-size:16px;">/85</span></div>
+          <div style="font-size:11px;color:#f59e0b;margin-top:3px;">Slightly elevated</div>
+        </div>
+      </div>
+
+      <!-- Health Score + Activity -->
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;">
+        <!-- Score Ring -->
+        <div class="card card-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px;">
+          <div style="font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Today's Health Score</div>
+          <div class="health-score-ring float-anim">
+            <div class="health-score-inner">
+              <div style="font-size:28px;font-weight:900;color:#4f8ef7;">76</div>
+              <div style="font-size:10px;color:var(--muted);">/ 100</div>
+            </div>
+          </div>
+          <div style="text-align:center;">
+            <span class="badge badge-blue">Good</span>
+            <div style="font-size:12px;color:var(--muted);margin-top:8px;">+4 points from yesterday<br>Keep it up! 💪</div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card card-body">
+          <div style="font-size:14px;font-weight:700;margin-bottom:18px;">Recent Health Activity</div>
+          <div class="timeline-item">
+            <div>
+              <div class="timeline-dot" style="background:#4f8ef7;margin-top:4px;"></div>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:600;">ML Risk Analysis Completed</div>
+              <div style="font-size:12px;color:var(--muted);">Diabetes risk flagged at 78% — based on 3 weeks of symptom patterns</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">Today, 6:42 AM</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div>
+              <div class="timeline-dot" style="background:#f59e0b;margin-top:4px;"></div>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:600;">⚠️ HITL: Doctor Booking Pending</div>
+              <div style="font-size:12px;color:var(--muted);">AI suggests booking Dr. Priya Sharma — awaiting your approval</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">Today, 7:15 AM</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div>
+              <div class="timeline-dot" style="background:#00d4b4;margin-top:4px;"></div>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:600;">Medication Reminder Sent</div>
+              <div style="font-size:12px;color:var(--muted);">Morning Metformin 500mg reminder delivered via WhatsApp</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">Today, 8:00 AM</div>
+            </div>
+          </div>
+          <div class="timeline-item" style="margin-bottom:0;">
+            <div>
+              <div class="timeline-dot" style="background:#7c5cd8;margin-top:4px;"></div>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:600;">Weekly Report Generated</div>
+              <div style="font-size:12px;color:var(--muted);">Sent to Dr. Sharma with BP trend, glucose readings, and sleep data</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">Yesterday, 9:00 PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SECTION: RISK ANALYSIS ── -->
+    <section id="risk" style="margin-bottom:36px;">
+      <div style="font-size:18px;font-weight:800;margin-bottom:18px;">⚠️ Risk Analysis <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px;">Powered by ML Engine</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+        <div class="card card-body">
+          <div style="font-size:13px;font-weight:700;margin-bottom:16px;">Disease Risk Predictions</div>
+          <div class="risk-bar-wrap">
+            <div class="risk-label-row">
+              <span>Diabetes Risk</span>
+              <span style="color:#f7794f;font-weight:700;">78%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill progress-orange" data-width="78" style="width:0%"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Reason: Polydipsia + fatigue + family history detected in memory</div>
+          </div>
+          <div class="risk-bar-wrap">
+            <div class="risk-label-row">
+              <span>Hypertension Risk</span>
+              <span style="color:#f59e0b;font-weight:700;">62%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill progress-orange" data-width="62" style="width:0%"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Reason: BP readings trending upward last 2 weeks</div>
+          </div>
+          <div class="risk-bar-wrap" style="margin-bottom:0;">
+            <div class="risk-label-row">
+              <span>Stress / Mental Health</span>
+              <span style="color:#00d4b4;font-weight:700;">34%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill progress-green" data-width="34" style="width:0%"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Low risk — sleep pattern and mood indicators stable</div>
+          </div>
+        </div>
+
+        <div class="card card-body">
+          <div style="font-size:13px;font-weight:700;margin-bottom:12px;">ML Confidence Explanation</div>
+          <div style="background:var(--surface2);border-radius:10px;padding:14px;border-left:3px solid #4f8ef7;margin-bottom:14px;">
+            <div style="font-size:11px;color:var(--accent);font-weight:700;letter-spacing:1px;margin-bottom:4px;">WHY 78% DIABETES RISK?</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+              ✦ Excessive thirst (polydipsia) — reported 3 weeks<br>
+              ✦ Fatigue after meals — pattern detected<br>
+              ✦ Blurred vision episodes — 4 occurrences<br>
+              ✦ Father had Type 2 Diabetes — <span style="color:#00d4b4;">Family Graph</span><br>
+              ✦ Fasting glucose reading: 126 mg/dL (borderline)
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:9px;">
+            <div style="font-size:12px;color:var(--muted);">Model confidence</div>
+            <div style="font-size:20px;font-weight:900;color:#f59e0b;">84%</div>
+          </div>
+          <button onclick="triggerHITL()" style="width:100%;margin-top:12px;padding:11px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">⚡ See AI Recommendation →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SECTION: AI AGENTS ── -->
+    <section id="agents" style="margin-bottom:36px;">
+      <div style="font-size:18px;font-weight:800;margin-bottom:18px;">⚡ AI Agents <span style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px;">3 specialists on your case</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+
+        <div class="agent-card running">
+          <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+            <div style="width:40px;height:40px;background:rgba(79,142,247,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">🧠</div>
+            <span class="badge badge-blue"><span class="pulse-anim">●</span> Running</span>
+          </div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Risk Agent</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Continuously monitors your vitals, symptoms, and health patterns. Flags risks with explanations.</div>
+          <div style="font-size:11px;color:var(--muted);background:var(--surface2);padding:8px 10px;border-radius:7px;">
+            <span style="color:#4f8ef7;">●</span> Currently analysing: BP + glucose correlation
+          </div>
+        </div>
+
+        <div class="agent-card running">
+          <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+            <div style="width:40px;height:40px;background:rgba(0,212,180,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">💊</div>
+            <span class="badge badge-green"><span class="pulse-anim">●</span> Running</span>
+          </div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Medication Agent</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Tracks your medication schedule, sends smart reminders, detects missed doses, and updates your doctor.</div>
+          <div style="font-size:11px;color:var(--muted);background:var(--surface2);padding:8px 10px;border-radius:7px;">
+            <span style="color:#00d4b4;">●</span> Next reminder: Metformin at 9:00 PM
+          </div>
+        </div>
+
+        <div class="agent-card idle">
+          <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+            <div style="width:40px;height:40px;background:rgba(124,92,216,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">🧘</div>
+            <span class="badge badge-purple">Standby</span>
+          </div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Mental Health Agent</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Watches for stress, anxiety, and mood patterns. Triggers intervention support when needed.</div>
+          <div style="font-size:11px;color:var(--muted);background:var(--surface2);padding:8px 10px;border-radius:7px;">
+            <span style="color:var(--muted);">●</span> No alerts — mood stable this week
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SECTION: MEDICATIONS ── -->
+    <section id="medications" style="margin-bottom:36px;">
+      <div style="font-size:18px;font-weight:800;margin-bottom:18px;">💊 Medication Tracker</div>
+      <div class="med-item">
+        <div class="med-icon" style="background:rgba(0,212,180,0.15);">💊</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;">Metformin 500mg</div>
+          <div style="font-size:12px;color:var(--muted);">Twice daily — 8 AM &amp; 9 PM · For diabetes management</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="badge badge-green">✓ Taken Today</span>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Next: 9:00 PM</div>
+        </div>
+      </div>
+      <div class="med-item">
+        <div class="med-icon" style="background:rgba(247,121,79,0.15);">🔴</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;">Amlodipine 5mg</div>
+          <div style="font-size:12px;color:var(--muted);">Once daily — 8 AM · For blood pressure control</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="badge badge-green">✓ Taken Today</span>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Next: Tomorrow 8 AM</div>
+        </div>
+      </div>
+      <div class="med-item">
+        <div class="med-icon" style="background:rgba(245,158,11,0.15);">⚡</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;">Vitamin D3 60K IU</div>
+          <div style="font-size:12px;color:var(--muted);">Once weekly — Sunday · Supplement</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="badge badge-yellow">Due Sunday</span>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">3 days away</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SECTION: AI CHAT ── -->
+    <section id="chat">
+      <div style="font-size:18px;font-weight:800;margin-bottom:18px;">💬 AI Health Chat</div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <!-- Chat header -->
+        <div style="background:var(--surface2);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;">⚡</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;">HealthSense AI</div>
+            <div style="font-size:11px;color:var(--accent3);display:flex;align-items:center;gap:4px;"><span class="pulse-anim">●</span> 3 agents online</div>
+          </div>
+          <span class="tag tag-yellow" style="margin-left:auto;">1 approval pending</span>
+        </div>
+        <!-- Chat messages -->
+        <div id="chat-messages" style="padding:18px;display:flex;flex-direction:column;gap:14px;min-height:300px;max-height:400px;overflow-y:auto;background:var(--bg);">
+          <div class="chat-bubble-ai">
+            <div style="font-size:11px;color:var(--accent);margin-bottom:4px;">🧠 ML Risk Engine</div>
+            Namaskar Priya! Aaj subah tumhara analysis complete hua. <strong style="color:#f7794f;">Diabetes risk 78%</strong> detect hui hai — 3 hafte se thakaan + zyada pyaas + blurred vision ka pattern mila. Family history bhi hamare memory mein hai.
+          </div>
+          <div class="chat-bubble-ai">
+            <div style="font-size:11px;color:var(--accent2);margin-bottom:4px;">⚡ Agentic AI</div>
+            Mere paas ek action plan hai. <strong>Dr. Priya Sharma</strong> (Endocrinologist, 2.3km away) kal 10 AM available hain. Kya main appointment book karun?
+          </div>
+          <div class="chat-bubble-hitl" id="hitl-chat-msg">
+            <div style="font-size:11px;color:#f59e0b;font-weight:700;margin-bottom:8px;">🧑‍💼 Human Approval Required</div>
+            <div style="font-size:13px;margin-bottom:12px;">Shall I book an appointment with <strong>Dr. Priya Sharma</strong> for tomorrow at <strong>10:00 AM</strong>?</div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="approveBooking()" style="flex:1;padding:9px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">✓ Yes, Book it</button>
+              <button onclick="rejectBooking()" style="flex:1;padding:9px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer;">✗ No thanks</button>
+            </div>
+          </div>
+        </div>
+        <!-- Chat input -->
+        <div style="border-top:1px solid var(--border);padding:14px 18px;display:flex;gap:10px;background:var(--surface2);">
+          <input id="chat-input" class="input" placeholder="Type your symptoms or ask anything..." style="flex:1;"/>
+          <button onclick="sendMessage()" class="btn btn-primary">Send →</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="../js/main.js"></script>
+<script>
+  function triggerHITL() {
+    HS.showApprovalModal({
+      title: 'Book Appointment with Dr. Priya Sharma',
+      description: 'AI has identified a <strong style="color:#f7794f;">78% diabetes risk</strong> based on your recent symptoms. Dr. Priya Sharma (Endocrinologist) is available tomorrow at <strong>10:00 AM</strong> — 2.3km from your location. Shall I confirm this booking and send you a reminder?',
+      onYes: () => {
+        HS.showToast('✓ Appointment booked! Dr. Sharma — Tomorrow 10 AM. Reminder set.', 'success');
+        document.getElementById('hitl-chat-msg').innerHTML = `
+          <div style="font-size:11px;color:#00d4b4;font-weight:700;margin-bottom:6px;">✓ Approved — Automation Running</div>
+          <div style="font-size:13px;color:var(--muted);">Appointment booked with Dr. Sharma for tomorrow 10 AM. WhatsApp reminder set for 9 AM. Doctor has been notified with your health report.</div>
+        `;
+      },
+      onNo: () => {
+        HS.showToast('Appointment cancelled. AI will not proceed.', 'info');
+      }
+    });
+  }
+
+  function approveBooking() {
+    HS.showToast('✓ Appointment booked! Dr. Sharma — Tomorrow 10 AM.', 'success');
+    document.getElementById('hitl-chat-msg').innerHTML = `
+      <div style="font-size:11px;color:#00d4b4;font-weight:700;margin-bottom:6px;">✓ Approved</div>
+      <div style="font-size:13px;color:var(--muted);">Done! Appointment confirmed. Reminder will be sent tomorrow at 9 AM.</div>
+    `;
+    addChatMessage('ai', '✓ All done! Appointment confirmed with Dr. Sharma for tomorrow 10 AM. I have also sent your latest health report to her. You will get a WhatsApp reminder at 9 AM.', '#00d4b4');
+  }
+
+  function rejectBooking() {
+    HS.showToast('Understood. Appointment not booked.', 'info');
+    document.getElementById('hitl-chat-msg').innerHTML = `
+      <div style="font-size:13px;color:var(--muted);">No problem — I will not book the appointment. Let me know when you are ready.</div>
+    `;
+  }
+
+  function addChatMessage(type, text, color) {
+    const box = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = type === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai';
+    if (type === 'ai') div.innerHTML = `<div style="font-size:11px;color:${color||'#4f8ef7'};margin-bottom:4px;">⚡ HealthSense AI</div>${text}`;
+    else div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    addChatMessage('user', msg);
+    input.value = '';
+    setTimeout(() => {
+      addChatMessage('ai', 'Samajh gaya. Tumhara yeh concern record ho gaya hai. ML engine is data ke saath analysis update karega. Kya aur kuch bata sakte ho — symptoms ya duration?', '#7c5cd8');
+    }, 1000);
+  }
+
+  document.getElementById('chat-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+</script>
+</body>
+</html>
