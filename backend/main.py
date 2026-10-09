@@ -44,17 +44,24 @@ app = FastAPI(
 )
 
 # ── CORS — allow frontend domains ──
+_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "https://healthsense-ai-frontend.onrender.com",  # Render static frontend
+    "https://healthsense-ai.onrender.com",
+]
+# Allow all in dev, restrict in production
+_env = os.getenv("ENVIRONMENT", "development")
+if _env != "production":
+    _ALLOWED_ORIGINS.append("*")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5500",          # Local dev (Live Server)
-        "http://127.0.0.1:5500",
-        "https://healthsense-ai.vercel.app",  # Production frontend
-        "*"  # Remove in production — list exact domains
-    ],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # ── GZIP compression — reduces response size by ~70% ──
@@ -75,8 +82,9 @@ def rate_limit(request: Request):
         window = {"count": 0, "start": now}
     window["count"] += 1
     request_counts[ip] = window
-    if window["count"] > 30:  # max 30 requests/minute per IP
-        raise HTTPException(status_code=429, detail="Too many requests. Please wait.")
+    limit = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
+    if window["count"] > limit:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait 60 seconds.")
 
 
 # ─────────────────────────────────────
