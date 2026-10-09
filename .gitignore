@@ -1,44 +1,93 @@
-# Bob artifacts (lean canvas etc - keep locally, don't deploy)
+# ----------------------------------------------
+#  HealthSense AI — .gitignore
+#  NEVER commit secrets, keys, or .env files!
+# ----------------------------------------------
+
+# -- Bob workspace artifacts (local only) --
 .bob/
 
-# Python
+# -- Environment / Secrets — NEVER COMMIT --
+.env
+.env.local
+.env.production
+.env.staging
+.env.*.local
+*.env
+secrets.json
+secrets.yaml
+secrets.yml
+config/secrets.*
+service-account*.json
+*credentials*.json
+*-key.json
+
+# -- Python --
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyd
 .Python
 env/
 venv/
 .venv/
 ENV/
+env.bak/
+venv.bak/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+coverage.xml
 
-# ML model files (large - store separately)
+# -- ML / AI model artifacts (large files) --
 backend/models/*.pkl
 backend/models/*.joblib
+backend/models/*.h5
+backend/models/*.keras
+backend/models/saved_model/
 backend/health_dataset.csv
+*.onnx
 
-# TF.js model (generated - rebuild on deploy)
+# -- TF.js model (generated on deploy) --
+frontend/js/tfjs_model/
 js/tfjs_model/
 
-# Environment variables
-.env
-.env.local
-.env.production
+# -- Node / JS (if added later) --
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+.next/
+.nuxt/
 
-# OS files
+# -- OS files --
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
 desktop.ini
+ehthumbs.db
 
-# Editor
+# -- Editor / IDE --
+.vscode/settings.json
+.idea/
 *.swp
 *.swo
 
-# Logs
+# -- Logs --
 *.log
 logs/
+log/
 
-# Vercel (using Render instead)
+# -- Database dumps (may contain PII / passwords) --
+*.sql.gz
+*.dump
+db_backup*/
+
+# -- Render / Vercel --
 .vercel/
+.render/
