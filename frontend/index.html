@@ -282,6 +282,17 @@
   </div>
 </nav>
 
+<!-- Mobile Nav Drawer -->
+<div class="mobile-nav" id="mobile-nav">
+  <a href="#how-it-works" onclick="closeMobileNav()">How It Works</a>
+  <a href="#features"     onclick="closeMobileNav()">Features</a>
+  <a href="#pipeline"     onclick="closeMobileNav()">Technology</a>
+  <a href="#unique"       onclick="closeMobileNav()">Why Us</a>
+  <a href="#pricing"      onclick="closeMobileNav()">Pricing</a>
+  <a href="pages/auth.html"     onclick="closeMobileNav()" style="color:var(--accent);font-weight:600;">Sign In →</a>
+  <a href="pages/ml-demo.html"  onclick="closeMobileNav()" style="margin-top:4px;padding:12px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border-radius:9px;text-align:center;font-weight:700;">🧠 Live Demo</a>
+</div>
+
 <!-- ════════════════════════════════════════
      HERO SECTION
 ════════════════════════════════════════ -->
@@ -769,6 +780,25 @@
     el.style.transform = 'translateY(20px)';
     observer.observe(el);
   });
+  // ── Mobile hamburger menu ──
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobile-nav');
+  function closeMobileNav() {
+    mobileNav.classList.remove('open');
+    hamburger.classList.remove('active');
+  }
+  if (hamburger) {
+    hamburger.addEventListener('click', () => {
+      mobileNav.classList.toggle('open');
+      hamburger.classList.toggle('active');
+    });
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!hamburger.contains(e.target) && !mobileNav.contains(e.target)) {
+        closeMobileNav();
+      }
+    });
+  }
 </script>
 <script src="js/main.js"></script>
 </body>
