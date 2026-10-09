@@ -605,31 +605,225 @@
     `;
   }
 
-  // ── Smart AI responses — keyword-based Agentic AI ──
-  const AI_RESPONSES = {
-    diabetes: { agent:'🧠 Risk Agent', color:'#4f8ef7', text:`<strong>Diabetes risk 78%</strong> hai teri. Main reasons:<br><br>✦ Fasting glucose 126 mg/dL — borderline diabetic range<br>✦ Polydipsia (zyada pyaas) + Polyuria pattern detected<br>✦ Papa ko Type 2 Diabetes tha — <span style="color:#00d4b4;">Family Memory record ✓</span><br><br><strong>Agentic AI suggestion:</strong> HbA1c test is week karwao. Dr. Sharma ko message kiya — kal 10 AM slot hold kar liya. <span style="color:#f59e0b;">Appointment confirm karun?</span>` },
-    diet: { agent:'🥗 Nutrition Agent', color:'#00d4b4', text:`Teri health profile ke basis pe personalized diet plan:<br><br><strong style="color:#00d4b4;">✅ Include karo:</strong> Daliya, brown rice, moong dal, curd, sabziyan, ajwain water, amla<br><strong style="color:#ef4444;">❌ Avoid karo:</strong> White rice, maida, sugary drinks, processed food, late night eating<br><strong style="color:#f59e0b;">⏰ Meal timing:</strong> 3 main meals + 2 snacks, 2 ghante se zyada mat bhookho<br><br><span style="color:#4f8ef7;">Automation: Daily diet reminder set karun? Subah 7 AM pe?</span>` },
-    medication: { agent:'💊 Medication Agent', color:'#7c5cd8', text:`Teri current medications review:<br><br>✦ <strong>Metformin 500mg</strong> — 92% adherence ✅ Excellent<br>✦ <strong>Amlodipine 5mg</strong> — 88% adherence ✓ Good<br>✦ <strong>Vitamin D3 60K IU</strong> — Sunday due (3 days baki)<br><br>⚠️ Kal subah ek dose miss hua tha — automation ne WhatsApp reminder bheja tha. Koi side effects feel ho rahe hain Metformin se? Kabhi kabhi nausea hoti hai khali pet lene se.` },
-    doctor: { agent:'⚡ Agentic AI', color:'#f59e0b', text:`<strong>Haan, doctor consultation urgent hai!</strong><br><br>78% diabetes risk ke saath 48 ghante mein endocrinologist se milna chahiye.<br><br><strong>Best Match — Dr. Priya Sharma</strong><br>📍 2.3km away · ⭐ 4.8 rating (142 reviews)<br>🕐 Kal 10:00 AM available · 💰 ₹500 consultation<br><br><button onclick="approveBooking()" style="margin-top:8px;padding:8px 16px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✓ Book Appointment</button>` },
-    bp: { agent:'🧠 Risk Agent', color:'#f7794f', text:`Blood pressure 130/85 mmHg hai — <strong style="color:#f59e0b;">slightly elevated</strong>.<br><br>✦ Normal range: 120/80 ya below<br>✦ Nana Ji ko BP + Heart issue tha — Family Memory record mein<br>✦ Current trend: Last 2 weeks mein 5 mmHg badha<br><br>Amlodipine sahi chal rahi hai. Salt intake kam karo, stress manage karo. Weekly BP log automation mein set hai.` },
-    stress: { agent:'🧘 Mental Health Agent', color:'#7c5cd8', text:`Stress aur anxiety health pe seedha asar karta hai.<br><br>✦ Teri sleep pattern last week irregular thi — <strong style="color:#f59e0b;">5.5 hrs average</strong><br>✦ 7-8 ghante ki neend diabetes management ke liye zaroori hai<br>✦ Cortisol (stress hormone) glucose level badhaata hai<br><br><strong>Suggestions:</strong> 10 min deep breathing subah, phone 30 min pehle band karo sone se, chamomile tea raat ko. <span style="color:#00d4b4;">Sleep tracker automation set karun?</span>` }
+  // ══════════════════════════════════════════════════════════════
+  //  AGENTIC AI ENGINE — Multi-Agent Collaboration
+  //  Risk Agent + Nutrition Agent + Medication Agent +
+  //  Mental Health Agent + Automation Agent
+  //  Each agent has: memory context, reasoning chain, action plan
+  // ══════════════════════════════════════════════════════════════
+
+  // Patient health memory (simulates vector database retrieval)
+  const PATIENT_MEMORY = {
+    name: 'Priya',
+    age: 38,
+    glucose_latest: 126,
+    bp_latest: '130/85',
+    bp_trend: '+5 mmHg over 14 days',
+    sleep_avg: '5.5 hrs (last 7 days)',
+    diabetes_risk: 78,
+    adherence: { metformin: 92, amlodipine: 88, vitD: 'due Sunday' },
+    family: { papa: 'T2 Diabetes (age 48)', nanaJi: 'BP + Heart', naniJi: 'T2 Diabetes' },
+    symptoms_logged: ['fatigue', 'excessive_thirst', 'blurred_vision'],
+    last_hba1c: '6.1% (3 months ago)',
+    weight_trend: '+1.2kg (last 30 days)',
+    missed_doses: 2,
+    automation_active: ['BP weekly log', 'medication reminder', 'sleep tracker']
   };
+
+  const AI_RESPONSES = {
+    diabetes: {
+      agent:'🧠 Risk Agent', color:'#4f8ef7',
+      text:`<strong>Tera Diabetes risk score: 78%</strong> — Deep Learning model ne analyze kiya.<br><br>
+      <div style="background:rgba(79,142,247,0.08);border-radius:8px;padding:10px;margin:8px 0;border-left:3px solid #4f8ef7;">
+        <strong style="font-size:11px;color:#4f8ef7;">🧠 REASONING CHAIN:</strong><br>
+        ✦ Fasting glucose <strong style="color:#f7794f;">126 mg/dL</strong> → ADA threshold exceeded (≥126 = diabetes)<br>
+        ✦ Polyuria-Polydipsia triad detected → interaction weight +2.10 in Layer 1<br>
+        ✦ Blurred vision → retinal glucose effect, Layer 1 weight +1.42<br>
+        ✦ <span style="color:#00d4b4;">Family Memory:</span> Papa (T2, age 48) + Nani Ji (T2) → hereditary boost +37%<br>
+        ✦ Last HbA1c 6.1% (3 months ago) — borderline, worsening trend
+      </div>
+      <strong>Agentic AI Action Plan:</strong><br>
+      1️⃣ HbA1c test this week (target: <5.7%)<br>
+      2️⃣ Fasting glucose retest tomorrow morning<br>
+      3️⃣ Dr. Priya Sharma — Kal 10 AM slot reserved<br><br>
+      <span style="color:#f59e0b;">🤖 Appointment confirm karun? Reminder bhi bhejun?</span>`
+    },
+
+    diet: {
+      agent:'🥗 Nutrition Agent', color:'#00d4b4',
+      text:`Teri complete health profile se personalized diet plan generate kiya:<br><br>
+      <div style="background:rgba(0,212,180,0.08);border-radius:8px;padding:10px;margin:8px 0;">
+        <strong style="color:#00d4b4;">✅ Include karo (diabetes + BP ke liye):</strong><br>
+        🌾 Daliya, ragi, brown rice (glycemic index kam)<br>
+        🫘 Moong dal, chana dal, rajma (slow digestion)<br>
+        🥗 Karela, methi, palak, lauki, tinda<br>
+        🥛 Curd (probiotic), buttermilk (BP ke liye)<br>
+        🌿 Ajwain water subah, amla juice, jeera water
+      </div>
+      <div style="background:rgba(239,68,68,0.06);border-radius:8px;padding:10px;margin:8px 0;">
+        <strong style="color:#ef4444;">❌ Avoid karo bilkul:</strong><br>
+        🍚 White rice, maida, white bread (high GI)<br>
+        🧃 Sugary drinks, packaged juice, cola<br>
+        🧂 Namkeen, pickles, papad (BP badhaate hain)<br>
+        🌙 Raat 9 ke baad heavy meal
+      </div>
+      <strong style="color:#f59e0b;">⏰ Meal timing (glucose spike rokne ke liye):</strong><br>
+      Breakfast 8AM → Snack 11AM → Lunch 1PM → Snack 4PM → Dinner 7PM<br><br>
+      <span style="color:#4f8ef7;">🤖 Automation: Subah 7 AM diet reminder + evening glucose log set karun?</span>`
+    },
+
+    medication: {
+      agent:'💊 Medication Agent', color:'#7c5cd8',
+      text:`<strong>Medication Adherence Report</strong> — AI tracked:<br><br>
+      <div style="background:rgba(124,92,216,0.08);border-radius:8px;padding:10px;margin:8px 0;">
+        ✦ <strong>Metformin 500mg</strong> (morning) — <span style="color:#00d4b4;">92% ✅ Excellent</span><br>
+        &nbsp;&nbsp;⚠ 2 doses missed last month — automation ne reminder bheja<br>
+        ✦ <strong>Amlodipine 5mg</strong> (evening) — <span style="color:#00d4b4;">88% ✓ Good</span><br>
+        &nbsp;&nbsp;Best time: Raat 8-9 PM, khane ke saath<br>
+        ✦ <strong>Vitamin D3 60K IU</strong> — <span style="color:#f59e0b;">⏰ Sunday due (3 days baki)</span>
+      </div>
+      <strong>💡 Important:</strong> Metformin <em>hamesha</em> khaane ke 30 min baad lo — khali pet nausea hoti hai.<br><br>
+      <strong>Drug interactions check:</strong> Metformin + Amlodipine — ✅ No known interactions.<br><br>
+      <span style="color:#7c5cd8;">🤖 Weekly medication report Dr. Sharma ko bhejun? Auto-refill reminder set karun?</span>`
+    },
+
+    doctor: {
+      agent:'⚡ Agentic AI', color:'#f59e0b',
+      text:`<strong>Doctor consultation URGENT hai</strong> — Risk Agent ne flag kiya.<br><br>
+      <div style="background:rgba(79,142,247,0.08);border-radius:8px;padding:12px;margin:8px 0;border-left:3px solid #4f8ef7;">
+        <strong>🏆 Best Match — Dr. Priya Sharma</strong><br>
+        👩‍⚕️ Endocrinologist · AIIMS trained · 14 years exp<br>
+        📍 Apollo Clinic, 2.3km · ⭐ 4.8 (142 reviews)<br>
+        🕐 <strong style="color:#00d4b4;">Kal 10:00 AM available</strong><br>
+        💰 ₹500 consultation · 📋 Health report auto-send kar dunga
+      </div>
+      <div style="background:rgba(245,158,11,0.06);border-radius:8px;padding:10px;margin:8px 0;">
+        <strong>🤖 Agentic AI will do (after your approval):</strong><br>
+        1. Appointment book + confirmation SMS<br>
+        2. Health report + last 30 days vitals send to Dr. Sharma<br>
+        3. WhatsApp reminder: kal subah 9 AM<br>
+        4. Post-appointment follow-up schedule
+      </div>
+      <button onclick="approveBooking()" style="padding:9px 20px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-top:4px;">✓ Haan, Book kar do</button>
+      <button onclick="showToast('Cancelled. No action taken.','info')" style="padding:9px 16px;background:transparent;border:1px solid #1e2d4a;color:#6b7fa3;border-radius:8px;font-size:12px;cursor:pointer;margin-left:8px;">✗ Abhi nahi</button>`
+    },
+
+    bp: {
+      agent:'🧠 Risk Agent', color:'#f7794f',
+      text:`<strong>Blood Pressure Analysis</strong> — 14-day trend detected:<br><br>
+      <div style="background:rgba(247,121,79,0.08);border-radius:8px;padding:10px;margin:8px 0;">
+        📊 Current: <strong style="color:#f59e0b;">130/85 mmHg</strong> (Stage 1 Hypertension — JNC8)<br>
+        📈 Trend: Last 14 days mein <strong style="color:#f7794f;">+5 mmHg systolic</strong> increase<br>
+        🎯 Target: 120/80 ya below<br>
+        👨‍👩‍👧 Family Memory: Nana Ji ko BP + Heart disease tha → +8% hereditary risk
+      </div>
+      <strong>Amlodipine 5mg status:</strong> ✅ Active, 88% adherence — working.<br><br>
+      <strong>Immediate actions:</strong><br>
+      ✦ Salt intake 1500mg/day se kam karo (no pickles, namkeen)<br>
+      ✦ DASH diet follow karo (fruits, vegetables, low-fat dairy)<br>
+      ✦ 30 min brisk walk daily — systolic 4-8 mmHg kam kar sakti hai<br>
+      ✦ Stress management — cortisol BP directly badhaata hai<br><br>
+      <span style="color:#4f8ef7;">🤖 Automation: Weekly BP log + Dr. Sharma ko monthly trend report set hai ✓</span>`
+    },
+
+    stress: {
+      agent:'🧘 Mental Health Agent', color:'#7c5cd8',
+      text:`<strong>Mental Health + Stress Analysis</strong>:<br><br>
+      <div style="background:rgba(124,92,216,0.08);border-radius:8px;padding:10px;margin:8px 0;">
+        😴 Sleep: <strong style="color:#f59e0b;">5.5 hrs average</strong> (last 7 days) — target 7-8 hrs<br>
+        😰 Stress indicators: Elevated cortisol pattern detected<br>
+        ⚡ Impact: High cortisol → glucose +15-20 mg/dL → diabetes risk badha<br>
+        💊 Sleep deprivation + diabetes = compounding risk (ML weight: +2.40)
+      </div>
+      <strong>Personalized plan:</strong><br>
+      🌅 Subah: 10 min deep breathing (4-7-8 technique)<br>
+      ☀️ Din mein: 15 min sunlight exposure (Vitamin D + mood)<br>
+      🌙 Sone se 30 min pehle: Phone band, chamomile tea, dim lights<br>
+      🚶 Evening walk: 20 min — endorphins release, cortisol kam<br>
+      📔 Journaling: 5 min raat ko — anxiety reduce hoti hai<br><br>
+      <span style="color:#00d4b4;">🤖 Automation: Sleep tracker + bedtime reminder set karun? Subah mood log bhi?</span>`
+    },
+
+    exercise: {
+      agent:'💪 Wellness Agent', color:'#00d4b4',
+      text:`<strong>Exercise Plan</strong> — Teri health profile ke liye:<br><br>
+      <div style="background:rgba(0,212,180,0.08);border-radius:8px;padding:10px;margin:8px 0;">
+        ⚠️ Diabetic patients ke liye exercise extra zaroori hai — glucose uptake badhaata hai
+      </div>
+      <strong>Weekly plan (doctor approved):</strong><br>
+      🚶 Mon/Wed/Fri: 30 min brisk walk (glucose -20-30 mg/dL immediate effect)<br>
+      🏊 Tue/Thu: 20 min swimming ya cycling (low impact — joints ke liye)<br>
+      🧘 Sat: Yoga/stretching — stress + BP dono ke liye<br>
+      🛌 Sun: Rest + light stretching<br><br>
+      ⚠️ <strong>Important:</strong> Exercise ke baad glucose check karo — hypoglycemia risk. Saath mein glucose tablet rakho.<br><br>
+      <span style="color:#4f8ef7;">🤖 Daily step count tracker + exercise reminder set karun?</span>`
+    },
+
+    weight: {
+      agent:'⚖️ Wellness Agent', color:'#f7794f',
+      text:`<strong>Weight Trend Analysis:</strong><br><br>
+      📊 Current trend: <strong style="color:#f59e0b;">+1.2 kg last 30 days</strong> — watch karna zaroori hai<br>
+      BMI target: 18.5–24.9 range (current BMI borderline)<br><br>
+      <div style="background:rgba(247,121,79,0.08);border-radius:8px;padding:10px;margin:8px 0;">
+        Weight aur diabetes ka direct connection hai:<br>
+        ✦ 5-7% weight loss → insulin sensitivity +30%<br>
+        ✦ 10% weight loss → HbA1c -1% improvement possible<br>
+        ✦ UKPDS study: Weight control = diabetes delay 3-5 years
+      </div>
+      <strong>Actionable steps:</strong><br>
+      ✦ Calorie deficit: 300-500 cal/day (sustainable)<br>
+      ✦ Protein increase: Dal, eggs, paneer, soya (satiety)<br>
+      ✦ Avoid: Processed food, refined carbs<br><br>
+      <span style="color:#00d4b4;">🤖 Weekly weight log + diet adherence tracker set karun?</span>`
+    }
+  };
+
   const DEFAULT_RESPONSES = [
-    { agent:'🧠 Risk Agent', color:'#4f8ef7', text:'Tera yeh symptom note ho gaya. ML engine mein record update ho raha hai. Risk score recalculate ho raha hai. Kitne din se yeh symptom hai aur kab zyada badh jaata hai?' },
-    { agent:'⚡ Agentic AI', color:'#7c5cd8', text:'Main teri 3 hafte ki health history dekh raha hoon. Is pattern ko pehle bhi note kiya tha. Risk Agent + Medication Agent dono is data pe kaam kar rahe hain. Kuch aur symptoms hain saath mein?' },
-    { agent:'💊 Medication Agent', color:'#00d4b4', text:'Yeh symptom kisi medication ke baad shuru hua? Metformin kabhi kabhi nausea de sakta hai empty stomach pe. Khaane ke 30 min baad lena better hai. Dose timing check karo apni schedule mein.' },
-    { agent:'🧘 Mental Health Agent', color:'#7c5cd8', text:'Kabhi kabhi physical symptoms ka root cause stress hota hai. Teri sleep aur stress levels monitor ho rahi hain. Last week 5.5 hrs average sleep thi — yeh diabetes aur BP dono ke liye problematic hai.' }
+    {
+      agent:'🧠 Risk Agent', color:'#4f8ef7',
+      text:`Tera yeh message note ho gaya aur health memory mein update ho raha hai.<br><br>
+      <div style="background:rgba(79,142,247,0.06);border-radius:8px;padding:10px;margin:6px 0;font-size:12px;">
+        <strong>Reasoning:</strong> Teri 21-day health history analyze kar raha hoon. Glucose trend, BP pattern, aur sleep data sab dekh raha hoon. Yeh symptom/concern pattern Risk Score mein factor hoga.
+      </div>
+      Kitne din se yeh problem hai? Koi specific trigger dikh raha hai — khaana, exercise, ya stress?`
+    },
+    {
+      agent:'⚡ Agentic AI', color:'#f59e0b',
+      text:`Multi-agent analysis chal rahi hai:<br><br>
+      🧠 Risk Agent: Glucose + BP trend check kar raha hai<br>
+      💊 Medication Agent: Current medications ke saath interaction dekh raha hai<br>
+      🧘 Mental Health Agent: Stress-physical health correlation analyze kar raha hai<br><br>
+      <div style="font-size:12px;color:#6b7fa3;">Is concern ke baare mein kuch aur details do — kab se, kitna intense, koi pehle aisa hua hai?</div>`
+    },
+    {
+      agent:'💊 Medication Agent', color:'#7c5cd8',
+      text:`Medication side effects ya interaction check karta hoon:<br><br>
+      ✦ <strong>Metformin 500mg</strong> — common side effects: nausea (empty stomach), diarrhea (initial days). Solution: Khaane ke 30 min baad lo.<br>
+      ✦ <strong>Amlodipine 5mg</strong> — ankle swelling, headache kabhi kabhi normal hai starting mein.<br><br>
+      Kya yeh symptom koi medication lene ke baad shuru hua? Time correlation batao.`
+    },
+    {
+      agent:'🧘 Mental Health Agent', color:'#7c5cd8',
+      text:`Physical aur mental health deeply connected hain:<br><br>
+      📊 Teri data se: Last week 5.5 hrs sleep + mild anxiety signals detected<br>
+      🔬 Research: Sleep deprivation directly glucose metabolism affect karta hai — ek raat kam soye toh insulin resistance +25%<br>
+      💡 Cortisol (stress hormone) glucose level 15-20 mg/dL badha sakta hai<br><br>
+      Is concern ke saath kya stress ya sleep bhi disturbed hai? Dono ka analysis karun?`
+    }
   ];
   let _ri = 0;
 
   function getAIResponse(msg) {
     const l = msg.toLowerCase();
-    if (l.includes('diabetes') || l.includes('sugar') || l.includes('glucose') || l.includes('thirst') || l.includes('pyaas')) return AI_RESPONSES.diabetes;
-    if (l.includes('diet') || l.includes('khana') || l.includes('food') || l.includes('kya khaun') || l.includes('nutrition')) return AI_RESPONSES.diet;
-    if (l.includes('medicine') || l.includes('medication') || l.includes('tablet') || l.includes('dawa') || l.includes('metformin')) return AI_RESPONSES.medication;
-    if (l.includes('doctor') || l.includes('appointment') || l.includes('consult') || l.includes('dr') || l.includes('hospital')) return AI_RESPONSES.doctor;
-    if (l.includes('bp') || l.includes('blood pressure') || l.includes('pressure') || l.includes('headache')) return AI_RESPONSES.bp;
-    if (l.includes('stress') || l.includes('anxiety') || l.includes('sleep') || l.includes('neend') || l.includes('tension')) return AI_RESPONSES.stress;
+    // ── Multi-keyword intent detection ──
+    if (l.includes('diabetes') || l.includes('sugar') || l.includes('glucose') || l.includes('thirst') || l.includes('pyaas') || l.includes('madhumeh')) return AI_RESPONSES.diabetes;
+    if (l.includes('diet') || l.includes('khana') || l.includes('food') || l.includes('kya khaun') || l.includes('nutrition') || l.includes('meal') || l.includes('eat') || l.includes('khaana')) return AI_RESPONSES.diet;
+    if (l.includes('medicine') || l.includes('medication') || l.includes('tablet') || l.includes('dawa') || l.includes('metformin') || l.includes('dawai') || l.includes('dose')) return AI_RESPONSES.medication;
+    if (l.includes('doctor') || l.includes('appointment') || l.includes('consult') || l.includes('dr ') || l.includes('hospital') || l.includes('clinic') || l.includes('sharma')) return AI_RESPONSES.doctor;
+    if (l.includes('bp') || l.includes('blood pressure') || l.includes('pressure') || l.includes('hypertension') || l.includes('headache') || l.includes('sar dard')) return AI_RESPONSES.bp;
+    if (l.includes('stress') || l.includes('anxiety') || l.includes('sleep') || l.includes('neend') || l.includes('tension') || l.includes('depression') || l.includes('sad') || l.includes('mental')) return AI_RESPONSES.stress;
+    if (l.includes('exercise') || l.includes('walk') || l.includes('gym') || l.includes('workout') || l.includes('vyayam') || l.includes('physical')) return AI_RESPONSES.exercise;
+    if (l.includes('weight') || l.includes('wajan') || l.includes('fat') || l.includes('obese') || l.includes('mota') || l.includes('bmi')) return AI_RESPONSES.weight;
     return DEFAULT_RESPONSES[_ri++ % DEFAULT_RESPONSES.length];
   }
 
