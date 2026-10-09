@@ -56,11 +56,11 @@
     <div class="nav-logo-text">Health<span>Sense</span> AI</div>
   </a>
   <ul class="nav-links">
-    <li><a href="#patients"     onclick="navTo('patients');return false;"     class="active">Patients</a></li>
-    <li><a href="#alerts"       onclick="navTo('alerts');return false;"                    >Alerts</a></li>
-    <li><a href="#analytics"    onclick="navTo('analytics');return false;"                >Analytics</a></li>
-    <li><a href="#reports"      onclick="navTo('reports');return false;"                  >Reports</a></li>
-    <li><a href="#appointments" onclick="navTo('appointments');return false;"             >Appointments</a></li>
+    <li><a href="#alerts"       onclick="navTo('alerts');return false;"       class="active">Alerts</a></li>
+    <li><a href="#patients"     onclick="navTo('patients');return false;"                   >Patients</a></li>
+    <li><a href="#analytics"    onclick="navTo('analytics');return false;"                  >Analytics</a></li>
+    <li><a href="#reports"      onclick="navTo('reports');return false;"                    >Reports</a></li>
+    <li><a href="#appointments" onclick="navTo('appointments');return false;"               >Appointments</a></li>
   </ul>
   <div style="display:flex;gap:10px;align-items:center;">
     <a href="patient-dashboard.html" class="btn btn-outline btn-sm">Switch: Patient View</a>
@@ -72,10 +72,10 @@
 </nav>
 
 <!-- LAYOUT -->
-<div style="display:grid;grid-template-columns:220px 1fr;min-height:100vh;padding-top:66px;">
+<div style="display:grid;grid-template-columns:220px 1fr;height:calc(100vh - 66px);margin-top:66px;overflow:hidden;">
 
   <!-- SIDEBAR -->
-  <aside style="background:var(--surface);border-right:1px solid var(--border);padding:20px 0;position:sticky;top:66px;height:calc(100vh - 66px);overflow-y:auto;">
+  <aside style="background:var(--surface);border-right:1px solid var(--border);padding:20px 0;overflow-y:auto;height:100%;">
     <div style="padding:0 16px 16px;border-bottom:1px solid var(--border);margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:42px;height:42px;background:linear-gradient(135deg,#00d4b4,#4f8ef7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;">D</div>
@@ -98,8 +98,8 @@
 
     <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:0 20px 6px;">Navigation</div>
     <ul style="list-style:none;padding:0 10px;margin-bottom:16px;" id="sidebar-nav">
-      <li><a href="#patients"     class="nav-item active-nav" onclick="navTo('patients',this);return false;"     style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;font-weight:600;text-decoration:none;"><span>👥</span> All Patients</a></li>
-      <li><a href="#alerts"       class="nav-item" onclick="navTo('alerts',this);return false;"       style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;text-decoration:none;"><span>🚨</span> Alerts <span style="margin-left:auto;background:rgba(239,68,68,0.2);color:#ef4444;font-size:10px;padding:1px 7px;border-radius:10px;">3</span></a></li>
+      <li><a href="#alerts"       class="nav-item active-nav" onclick="navTo('alerts',this);return false;"       style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;font-weight:600;text-decoration:none;"><span>🚨</span> Alerts <span style="margin-left:auto;background:rgba(239,68,68,0.2);color:#ef4444;font-size:10px;padding:1px 7px;border-radius:10px;">3</span></a></li>
+      <li><a href="#patients"     class="nav-item" onclick="navTo('patients',this);return false;"     style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;text-decoration:none;"><span>👥</span> All Patients</a></li>
       <li><a href="#analytics"    class="nav-item" onclick="navTo('analytics',this);return false;"    style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;text-decoration:none;"><span>📊</span> Analytics</a></li>
       <li><a href="#reports"      class="nav-item" onclick="navTo('reports',this);return false;"      style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;text-decoration:none;"><span>📋</span> AI Reports</a></li>
       <li><a href="#appointments" class="nav-item" onclick="navTo('appointments',this);return false;" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13px;text-decoration:none;"><span>📅</span> Appointments</a></li>
@@ -113,7 +113,7 @@
   </aside>
 
   <!-- MAIN -->
-  <main id="dr-main" style="padding:28px;overflow-y:auto;">
+  <main id="dr-main" style="padding:28px;overflow-y:auto;height:100%;">
 
     <!-- Header -->
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
@@ -578,50 +578,46 @@
     setTimeout(() => { d.style.opacity='0'; setTimeout(()=>d.remove(),300); }, 2700);
   }
 
-  // ── Navigation: scroll inside <main> + update active states ──
-  const SECTIONS = ['patients','alerts','analytics','reports','appointments'];
+  // ── Navigation — order must match DOM top-to-bottom ──
+  const SECTIONS = ['alerts','patients','analytics','reports','appointments'];
 
-  function navTo(id, sidebarEl) {
-    const main = document.getElementById('dr-main');
-    const target = document.getElementById(id);
-    if (!target || !main) return;
-
-    // Smooth scroll inside the main panel
-    main.scrollTo({ top: target.offsetTop - 16, behavior: 'smooth' });
-
-    // Update sidebar active
-    document.querySelectorAll('#sidebar-nav .nav-item').forEach(a => a.classList.remove('active-nav'));
-    // If called from sidebar link directly
-    if (sidebarEl) sidebarEl.classList.add('active-nav');
-    else {
-      // Called from navbar — find matching sidebar link
-      const match = document.querySelector(`#sidebar-nav a[href="#${id}"]`);
-      if (match) match.classList.add('active-nav');
-    }
-
-    // Update top navbar active
+  function setActive(id) {
+    document.querySelectorAll('#sidebar-nav .nav-item').forEach(a => {
+      a.classList.toggle('active-nav', a.getAttribute('href') === '#' + id);
+    });
     document.querySelectorAll('.nav-links a').forEach(a => {
       a.classList.toggle('active', a.getAttribute('href') === '#' + id);
     });
   }
 
-  // ── Scroll-spy: highlight sidebar as user scrolls ──
+  function navTo(id, sidebarEl) {
+    const main   = document.getElementById('dr-main');
+    const target = document.getElementById(id);
+    if (!target || !main) return;
+
+    // offsetTop relative to <main> — works because main has overflow-y:auto + height:100%
+    const mainRect   = main.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const scrollBy   = targetRect.top - mainRect.top - 16;
+
+    main.scrollBy({ top: scrollBy, behavior: 'smooth' });
+    setActive(id);
+  }
+
+  // ── Scroll-spy ──
   (function() {
     const main = document.getElementById('dr-main');
     if (!main) return;
     main.addEventListener('scroll', () => {
       let current = SECTIONS[0];
+      const mainTop = main.getBoundingClientRect().top;
       SECTIONS.forEach(id => {
         const el = document.getElementById(id);
-        if (el && el.offsetTop - 40 <= main.scrollTop) current = id;
+        if (!el) return;
+        const top = el.getBoundingClientRect().top - mainTop;
+        if (top <= 40) current = id;
       });
-      document.querySelectorAll('#sidebar-nav .nav-item').forEach(a => {
-        const isActive = a.getAttribute('href') === '#' + current;
-        a.classList.toggle('active-nav', isActive);
-      });
-      document.querySelectorAll('.nav-links a').forEach(a => {
-        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
-      });
+      setActive(current);
     }, { passive: true });
   })();
 
