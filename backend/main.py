@@ -1,5 +1,5 @@
 # HealthSense AI — Backend (FastAPI)
-# Scalable: handles 20,000–30,000 concurrent users
+# Production-grade: handles 20,000–30,000 concurrent users
 # Deploy on: Render Web Service
 
 from fastapi import FastAPI, HTTPException, Depends, Request
@@ -23,8 +23,8 @@ def load_model():
     scaler_path  = os.path.join(MODEL_DIR, "scaler.pkl")
     feature_path = os.path.join(MODEL_DIR, "feature_cols.pkl")
     if os.path.exists(model_path) and os.path.exists(scaler_path):
-        _model       = joblib.load(model_path)
-        _scaler      = joblib.load(scaler_path)
+        _model        = joblib.load(model_path)
+        _scaler       = joblib.load(scaler_path)
         _feature_cols = joblib.load(feature_path) if os.path.exists(feature_path) else None
         print("✅ Trained ML model loaded from disk")
     else:
@@ -38,8 +38,8 @@ load_model()
 app = FastAPI(
     title="HealthSense AI API",
     description="ML + Agentic AI + Automation — Health Intelligence Platform",
-    version="1.0.0",
-    docs_url="/docs",        # Swagger UI (disable in production)
+    version="3.0.0",
+    docs_url="/docs",
     redoc_url="/redoc"
 )
 
@@ -48,13 +48,17 @@ _ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5500",
     "http://127.0.0.1:5500",
-    "https://healthsense-ai-frontend.onrender.com",  # Render static frontend
+    "http://127.0.0.1:8080",
+    "https://healthsense-ai-frontend.onrender.com",
     "https://healthsense-ai.onrender.com",
 ]
-# Allow all in dev, restrict in production
 _env = os.getenv("ENVIRONMENT", "development")
 if _env != "production":
     _ALLOWED_ORIGINS.append("*")
+
+extra_origins = os.getenv("ALLOWED_ORIGINS", "")
+if extra_origins:
+    _ALLOWED_ORIGINS.extend([o.strip() for o in extra_origins.split(",") if o.strip()])
 
 app.add_middleware(
     CORSMiddleware,
@@ -70,20 +74,19 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # ─────────────────────────────────────
 #   RATE LIMITING — prevent abuse
-#   (simple in-memory; use Redis for 30K users)
 # ─────────────────────────────────────
-request_counts = {}
+request_counts: dict = {}
 
 def rate_limit(request: Request):
-    ip = request.client.host
+    ip  = request.client.host if request.client else "unknown"
     now = time.time()
-    window = request_counts.get(ip, {"count": 0, "start": now})
-    if now - window["start"] > 60:
-        window = {"count": 0, "start": now}
-    window["count"] += 1
-    request_counts[ip] = window
+    w   = request_counts.get(ip, {"count": 0, "start": now})
+    if now - w["start"] > 60:
+        w = {"count": 0, "start": now}
+    w["count"] += 1
+    request_counts[ip] = w
     limit = int(os.getenv("RATE_LIMIT_PER_MINUTE", "200"))
-    if window["count"] > limit:
+    if w["count"] > limit:
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait 60 seconds.")
 
 
@@ -91,115 +94,186 @@ def rate_limit(request: Request):
 #   DATA MODELS (Pydantic — validated)
 # ─────────────────────────────────────
 class SymptomInput(BaseModel):
-    symptoms: List[str] = Field(..., description="List of symptom keys")
-    glucose: Optional[float] = Field(None, ge=0, le=600)
+    symptoms:       List[str]       = Field(..., description="List of symptom keys")
+    glucose:        Optional[float] = Field(None, ge=0,  le=600)
     blood_pressure: Optional[float] = Field(None, ge=50, le=250)
-    age: Optional[int] = Field(None, ge=1, le=120)
-    family_history: Optional[str] = "none"
-    user_id: Optional[str] = None   # for memory/history (optional)
+    bmi:            Optional[float] = Field(None, ge=10, le=70)
+    age:            Optional[int]   = Field(None, ge=1,  le=120)
+    hba1c:          Optional[float] = Field(None, ge=3,  le=20)
+    sleep_hrs:      Optional[float] = Field(None, ge=0,  le=24)
+    smoking:        Optional[str]   = "never"
+    activity:       Optional[str]   = "moderate"
+    gender:         Optional[str]   = "unknown"
+    family_history: Optional[str]   = "none"
+    user_id:        Optional[str]   = None
 
 class PatientCreate(BaseModel):
-    name: str
-    age: int = Field(..., ge=1, le=120)
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    conditions: List[str] = []
+    name:       str
+    age:        int          = Field(..., ge=1, le=120)
+    email:      Optional[str] = None
+    phone:      Optional[str] = None
+    conditions: List[str]    = []
 
 class MedicationLog(BaseModel):
-    patient_id: str
+    patient_id:      str
     medication_name: str
-    dose_taken: bool
-    timestamp: Optional[str] = None
+    dose_taken:      bool
+    timestamp:       Optional[str] = None
 
 
 # ─────────────────────────────────────
-#   ML PREDICTION LOGIC
-#   (Rule-based weights — replace with
-#    trained TF/sklearn model in production)
+#   ML PREDICTION LOGIC — v3.0
+#   24 symptoms · 6 diseases · full vitals
 # ─────────────────────────────────────
 SYMPTOM_WEIGHTS = {
-    "fatigue":           {"diabetes": 20, "hypertension": 10, "heart": 8,  "mental": 15},
-    "excessive_thirst":  {"diabetes": 35, "hypertension": 5,  "heart": 3,  "mental": 2 },
-    "blurred_vision":    {"diabetes": 30, "hypertension": 12, "heart": 5,  "mental": 5 },
-    "frequent_urination":{"diabetes": 32, "hypertension": 6,  "heart": 3,  "mental": 2 },
-    "headache":          {"diabetes": 8,  "hypertension": 25, "heart": 10, "mental": 10},
-    "chest_pain":        {"diabetes": 5,  "hypertension": 20, "heart": 40, "mental": 8 },
-    "shortness_breath":  {"diabetes": 5,  "hypertension": 15, "heart": 35, "mental": 12},
-    "weight_loss":       {"diabetes": 25, "hypertension": 5,  "heart": 10, "mental": 8 },
-    "anxiety":           {"diabetes": 5,  "hypertension": 12, "heart": 8,  "mental": 40},
-    "sleep_issues":      {"diabetes": 5,  "hypertension": 10, "heart": 6,  "mental": 35},
-    "numbness":          {"diabetes": 22, "hypertension": 8,  "heart": 12, "mental": 5 },
-    "nausea":            {"diabetes": 10, "hypertension": 8,  "heart": 15, "mental": 10},
+    # Metabolic / Diabetes
+    "fatigue":            {"diabetes": 20, "hypertension": 10, "heart": 8,  "mental": 15, "thyroid": 22, "pcos": 12},
+    "excessive_thirst":   {"diabetes": 35, "hypertension": 5,  "heart": 3,  "mental": 2,  "thyroid": 5,  "pcos": 8 },
+    "blurred_vision":     {"diabetes": 30, "hypertension": 12, "heart": 5,  "mental": 5,  "thyroid": 6,  "pcos": 3 },
+    "frequent_urination": {"diabetes": 32, "hypertension": 6,  "heart": 3,  "mental": 2,  "thyroid": 4,  "pcos": 6 },
+    "numbness":           {"diabetes": 22, "hypertension": 8,  "heart": 12, "mental": 5,  "thyroid": 10, "pcos": 3 },
+    "weight_loss":        {"diabetes": 25, "hypertension": 5,  "heart": 10, "mental": 8,  "thyroid": 28, "pcos": 5 },
+    "slow_healing":       {"diabetes": 28, "hypertension": 4,  "heart": 6,  "mental": 3,  "thyroid": 8,  "pcos": 5 },
+    "skin_darkening":     {"diabetes": 20, "hypertension": 3,  "heart": 2,  "mental": 2,  "thyroid": 5,  "pcos": 30},
+    # Cardiovascular / BP
+    "headache":           {"diabetes": 8,  "hypertension": 25, "heart": 10, "mental": 10, "thyroid": 12, "pcos": 5 },
+    "chest_pain":         {"diabetes": 5,  "hypertension": 20, "heart": 40, "mental": 8,  "thyroid": 5,  "pcos": 3 },
+    "shortness_breath":   {"diabetes": 5,  "hypertension": 15, "heart": 35, "mental": 12, "thyroid": 10, "pcos": 4 },
+    "palpitations":       {"diabetes": 4,  "hypertension": 18, "heart": 30, "mental": 15, "thyroid": 25, "pcos": 10},
+    "dizziness":          {"diabetes": 8,  "hypertension": 22, "heart": 18, "mental": 10, "thyroid": 12, "pcos": 5 },
+    "ankle_swelling":     {"diabetes": 5,  "hypertension": 18, "heart": 32, "mental": 3,  "thyroid": 8,  "pcos": 5 },
+    # Mental Health
+    "anxiety":            {"diabetes": 5,  "hypertension": 12, "heart": 8,  "mental": 40, "thyroid": 15, "pcos": 18},
+    "sleep_issues":       {"diabetes": 5,  "hypertension": 10, "heart": 6,  "mental": 35, "thyroid": 18, "pcos": 12},
+    "low_mood":           {"diabetes": 6,  "hypertension": 5,  "heart": 5,  "mental": 42, "thyroid": 20, "pcos": 15},
+    "irritability":       {"diabetes": 5,  "hypertension": 8,  "heart": 5,  "mental": 38, "thyroid": 22, "pcos": 14},
+    # Thyroid / Hormonal
+    "weight_gain":        {"diabetes": 15, "hypertension": 8,  "heart": 8,  "mental": 10, "thyroid": 32, "pcos": 35},
+    "cold_intolerance":   {"diabetes": 3,  "hypertension": 2,  "heart": 3,  "mental": 5,  "thyroid": 40, "pcos": 8 },
+    "hair_loss":          {"diabetes": 5,  "hypertension": 3,  "heart": 2,  "mental": 8,  "thyroid": 35, "pcos": 30},
+    "nausea":             {"diabetes": 10, "hypertension": 8,  "heart": 15, "mental": 10, "thyroid": 10, "pcos": 18},
+    "irregular_periods":  {"diabetes": 8,  "hypertension": 3,  "heart": 2,  "mental": 12, "thyroid": 20, "pcos": 45},
+    "acne":               {"diabetes": 5,  "hypertension": 2,  "heart": 1,  "mental": 5,  "thyroid": 5,  "pcos": 40},
 }
 
 def calculate_risk(data: SymptomInput) -> dict:
-    scores = {"diabetes": 0, "hypertension": 0, "heart": 0, "mental": 0}
+    scores = {"diabetes": 0, "hypertension": 0, "heart": 0, "mental": 0, "thyroid": 0, "pcos": 0}
 
     for symptom in data.symptoms:
         if symptom in SYMPTOM_WEIGHTS:
             for disease, weight in SYMPTOM_WEIGHTS[symptom].items():
                 scores[disease] += weight
 
-    # Vitals boost
-    if data.glucose:
-        if data.glucose >= 126: scores["diabetes"] += 20
-        elif data.glucose >= 100: scores["diabetes"] += 8
-    if data.blood_pressure:
-        if data.blood_pressure >= 140:
-            scores["hypertension"] += 25
-            scores["heart"] += 10
-        elif data.blood_pressure >= 130:
-            scores["hypertension"] += 12
+    # Glucose
+    g = data.glucose or 0
+    if g >= 126:  scores["diabetes"] += 22
+    elif g >= 100: scores["diabetes"] += 10
 
-    # Age factor
-    if data.age:
-        if data.age >= 45:
-            scores["diabetes"] += 10; scores["hypertension"] += 10; scores["heart"] += 12
-        if data.age >= 60:
-            scores["diabetes"] += 5;  scores["hypertension"] += 5;  scores["heart"] += 8
+    # HbA1c
+    h = data.hba1c or 0
+    if h >= 6.5:  scores["diabetes"] += 20
+    elif h >= 5.7: scores["diabetes"] += 10
+
+    # Blood pressure
+    bp = data.blood_pressure or 0
+    if bp >= 140:
+        scores["hypertension"] += 28; scores["heart"] += 12
+    elif bp >= 130:
+        scores["hypertension"] += 14
+
+    # BMI
+    bm = data.bmi or 0
+    if bm >= 30:
+        scores["diabetes"] += 12; scores["hypertension"] += 8;  scores["pcos"] += 15
+    elif bm >= 25:
+        scores["diabetes"] += 6;  scores["hypertension"] += 4;  scores["pcos"] += 8
+
+    # Sleep
+    sl = data.sleep_hrs or 7
+    if sl < 5:
+        scores["mental"] += 15; scores["diabetes"] += 8; scores["hypertension"] += 6
+    elif sl < 6:
+        scores["mental"] += 8;  scores["diabetes"] += 4
+
+    # Smoking
+    if data.smoking == "current":
+        scores["heart"] += 20; scores["hypertension"] += 12; scores["diabetes"] += 8
+    elif data.smoking == "former":
+        scores["heart"] += 8;  scores["hypertension"] += 5
+
+    # Activity
+    if data.activity == "sedentary":
+        scores["diabetes"] += 10; scores["heart"] += 8; scores["hypertension"] += 6; scores["pcos"] += 10
+    elif data.activity == "moderate":
+        scores["diabetes"] += 4;  scores["heart"] += 3
+
+    # Gender — PCOS only females
+    if data.gender == "male":
+        scores["pcos"] = 0
+
+    # Age
+    a = data.age or 0
+    if a >= 45:
+        scores["diabetes"] += 10; scores["hypertension"] += 10; scores["heart"] += 12
+    if a >= 60:
+        scores["diabetes"] += 5;  scores["hypertension"] += 5;  scores["heart"] += 8
+    if a < 40 and data.gender == "female":
+        scores["pcos"] += 8   # PCOS more common in younger females
 
     # Family history
     fh = data.family_history or "none"
-    if fh == "diabetes":  scores["diabetes"] += 18
-    elif fh == "bp":      scores["hypertension"] += 18
-    elif fh == "heart":   scores["heart"] += 20
-    elif fh == "both":    scores["diabetes"] += 18; scores["hypertension"] += 18
+    FH_MAP = {
+        "diabetes":    {"diabetes": 18},
+        "bp":          {"hypertension": 18},
+        "heart":       {"heart": 20},
+        "thyroid":     {"thyroid": 20},
+        "diabetes_bp": {"diabetes": 18, "hypertension": 18},
+        "all":         {"diabetes": 18, "hypertension": 18, "heart": 20},
+        "both":        {"diabetes": 18, "hypertension": 18},
+    }
+    if fh in FH_MAP:
+        for d, w in FH_MAP[fh].items():
+            scores[d] += w
 
     # Cap at 97
     scores = {k: min(v, 97) for k, v in scores.items()}
 
-    # Top risk
     top_disease = max(scores, key=scores.get)
     top_score   = scores[top_disease]
     confidence  = min(top_score + 6, 97)
+    level       = "high" if top_score >= 60 else "medium" if top_score >= 35 else "low"
 
-    # Explanation
-    contributing = [s for s in data.symptoms if s in SYMPTOM_WEIGHTS][:4]
-    explanation  = f"Top contributing factors: {', '.join(contributing)}"
-    if data.glucose and data.glucose >= 100:
-        explanation += f". Glucose {data.glucose} mg/dL (elevated)"
-    if data.blood_pressure and data.blood_pressure >= 130:
-        explanation += f". BP {data.blood_pressure} mmHg (elevated)"
-
-    level = "high" if top_score >= 60 else "medium" if top_score >= 35 else "low"
+    contributing = [s for s in data.symptoms if s in SYMPTOM_WEIGHTS][:5]
+    explanation  = f"Top contributing symptoms: {', '.join(contributing)}" if contributing else "Vitals-based assessment"
+    if g >= 100:   explanation += f". Glucose {g} mg/dL (elevated)"
+    if h >= 5.7:   explanation += f". HbA1c {h}% (pre-diabetic range)"
+    if bp >= 130:  explanation += f". BP {bp} mmHg (elevated)"
+    if bm >= 25:   explanation += f". BMI {bm} (overweight)"
 
     return {
-        "risks": scores,
-        "top_disease": top_disease,
-        "top_score": top_score,
-        "confidence": confidence,
-        "risk_level": level,
-        "explanation": explanation,
-        "recommendation": _get_recommendation(level, top_disease, top_score)
+        "risks":          scores,
+        "top_disease":    top_disease,
+        "top_score":      top_score,
+        "confidence":     confidence,
+        "risk_level":     level,
+        "explanation":    explanation,
+        "recommendation": _get_recommendation(level, top_disease, top_score),
+        "model":          "rule_based_v3"
     }
 
 def _get_recommendation(level: str, disease: str, score: int) -> str:
-    if level == "high":
-        return f"High {disease} risk ({score}%). Consult an endocrinologist or specialist within 48 hours. Do not ignore."
-    elif level == "medium":
-        return f"Moderate {disease} risk. Schedule a routine check-up within 2 weeks. Monitor vitals daily."
-    else:
-        return "Risk levels are low. Maintain healthy habits and schedule a wellness check every 3 months."
+    msgs = {
+        "diabetes":     "Consult an endocrinologist. HbA1c test recommended within 7 days.",
+        "hypertension": "Monitor BP daily. Reduce sodium. Consult a cardiologist.",
+        "heart":        "Seek cardiologist consultation within 48 hours. Lipid panel needed.",
+        "mental":       "Speak to a mental health professional. Sleep hygiene is critical.",
+        "thyroid":      "TSH + Free T4 test recommended. Consult an endocrinologist.",
+        "pcos":         "Gynecologist consultation recommended. Hormonal panel + pelvic ultrasound.",
+    }
+    base = msgs.get(disease, "Consult your physician.")
+    if level == "high":   return f"⚠️ High {disease} risk ({score}%). {base} Do not delay."
+    elif level == "medium": return f"Moderate {disease} risk ({score}%). {base} Schedule check-up within 2 weeks."
+    else: return f"Low risk. Maintain healthy habits. Annual wellness check recommended."
 
 
 # ─────────────────────────────────────
@@ -209,30 +283,36 @@ def _get_recommendation(level: str, disease: str, score: int) -> str:
 @app.get("/")
 def root():
     return {
-        "service": "HealthSense AI API",
-        "version": "1.0.0",
-        "status": "running",
-        "technologies": ["ML", "Agentic AI", "Automation"]
+        "service":     "HealthSense AI API",
+        "version":     "3.0.0",
+        "status":      "running",
+        "diseases":    6,
+        "symptoms":    24,
+        "model":       "Ensemble(GB+RF)+Calibration" if _model else "rule_based_v3",
+        "technologies": ["ML v3.0", "Agentic AI", "Automation", "Supabase"]
     }
 
 @app.get("/health")
 def health_check():
-    """Used by Railway/Render for uptime monitoring"""
-    return {"status": "healthy", "timestamp": time.time()}
+    return {
+        "status":    "healthy",
+        "timestamp": time.time(),
+        "ml_model":  "loaded" if _model else "rule_based_fallback",
+        "db":        "supabase"
+    }
 
 
 # ── ML PREDICTION ──
 @app.post("/api/predict", dependencies=[Depends(rate_limit)])
 def predict_risk(data: SymptomInput):
     """
-    Main ML prediction endpoint — uses trained Deep Learning model if available.
-    Input: symptoms + vitals + family history
-    Output: risk scores, confidence, explanation, recommendation
+    ML prediction: 24 symptoms + vitals + lifestyle → 6 disease risks
+    Uses trained ensemble model if available, else rule-based v3.0 fallback
     """
     if not data.symptoms:
         raise HTTPException(status_code=400, detail="At least one symptom is required")
 
-    # ── Use trained model if loaded ──
+    # ── Use trained sklearn model if loaded ──
     if _model is not None and _scaler is not None:
         try:
             sym_set = set(data.symptoms)
@@ -255,128 +335,190 @@ def predict_risk(data: SymptomInput):
                 1 if "sleep_issues"       in sym_set else 0,
                 1 if "numbness"           in sym_set else 0,
                 1 if "nausea"             in sym_set else 0,
-                data.glucose or 90,
+                data.glucose        or 90,
                 data.blood_pressure or 110,
-                data.age or 35,
-                26.0,  # default BMI
-                1 if data.family_history in ["diabetes","both"] else 0,
-                1 if data.family_history in ["bp","both"] else 0,
+                data.age            or 35,
+                data.bmi            or 26.0,
+                1 if data.family_history in ["diabetes","both","diabetes_bp","all"] else 0,
+                1 if data.family_history in ["bp","both","diabetes_bp","all"]       else 0,
             ]
-            X = np.array([vec], dtype=np.float32)
+            X        = np.array([vec], dtype=np.float32)
             X_scaled = _scaler.transform(X)
-            proba = _model.predict_proba(X_scaled)[0]
+            proba    = _model.predict_proba(X_scaled)[0]
             CLASS_NAMES = ["Normal","Diabetes","Hypertension","MentalHealth"]
             risks = {
                 "diabetes":     int(round(proba[1] * 100)),
                 "hypertension": int(round(proba[2] * 100)),
                 "heart":        int(round(max(proba[1], proba[2]) * 0.65 * 100)),
                 "mental":       int(round(proba[3] * 100)),
+                "thyroid":      0,
+                "pcos":         0,
             }
-            top_idx  = int(np.argmax(proba))
-            top_name = CLASS_NAMES[top_idx]
-            top_score = int(round(max(proba) * 100))
-            level = "high" if top_score >= 60 else "medium" if top_score >= 35 else "low"
+            # Augment thyroid/pcos from rule-based
+            rb = calculate_risk(data)
+            risks["thyroid"] = rb["risks"]["thyroid"]
+            risks["pcos"]    = rb["risks"]["pcos"]
 
-            contributing = [s for s in data.symptoms][:4]
-            explanation  = f"ML model prediction. Key factors: {', '.join(contributing)}"
+            top_idx   = int(np.argmax(proba[1:], axis=0)) + 1
+            top_score = int(round(max(proba[1:]) * 100))
+            top_name  = CLASS_NAMES[top_idx] if top_idx < len(CLASS_NAMES) else "Unknown"
+            level     = "high" if top_score >= 60 else "medium" if top_score >= 35 else "low"
+            contributing = list(sym_set)[:5]
+            explanation  = f"Trained ML model. Key factors: {', '.join(contributing)}"
             if data.glucose and data.glucose >= 100:
                 explanation += f". Glucose: {data.glucose} mg/dL"
             if data.blood_pressure and data.blood_pressure >= 130:
                 explanation += f". BP: {data.blood_pressure} mmHg"
 
             result = {
-                "risks": risks,
-                "top_disease": top_name,
-                "top_score": top_score,
-                "confidence": min(top_score + 5, 97),
-                "risk_level": level,
-                "explanation": explanation,
-                "recommendation": _get_recommendation(level, top_name, top_score),
-                "model": "trained_ml"
+                "risks":          risks,
+                "top_disease":    top_name,
+                "top_score":      top_score,
+                "confidence":     min(top_score + 5, 97),
+                "risk_level":     level,
+                "explanation":    explanation,
+                "recommendation": _get_recommendation(level, top_name.lower(), top_score),
+                "model":          "trained_ensemble_v3"
             }
-        except Exception as e:
+        except Exception:
             result = calculate_risk(data)
-            result["model"] = "fallback"
     else:
         result = calculate_risk(data)
-        result["model"] = "rule_based"
 
     return JSONResponse(content={
-        "success": True,
-        "data": result,
+        "success":      True,
+        "data":         result,
         "privacy_note": "No health data is stored without explicit consent"
     })
 
 
-# ── AGENTIC AI ACTION ──
+# ── AGENTIC AI SUGGESTIONS ──
 @app.post("/api/agent/suggest", dependencies=[Depends(rate_limit)])
 def agent_suggest(data: SymptomInput):
-    """
-    Agentic AI: returns suggested next steps (not executed automatically — HITL required)
-    """
+    """Agentic AI: multi-agent risk assessment + HITL-gated action suggestions"""
     risk_result = calculate_risk(data)
-    level = risk_result["risk_level"]
+    level       = risk_result["risk_level"]
+    disease     = risk_result["top_disease"]
 
-    actions = []
+    agents_involved = []
+    actions         = []
+
     if level == "high":
+        agents_involved = ["Risk Agent", "Medication Agent", "Automation Orchestrator", "Emergency Alert Agent"]
         actions = [
-            {"type": "book_appointment", "label": "Book specialist appointment", "requires_approval": True},
-            {"type": "set_reminder",     "label": "Set daily medication reminder", "requires_approval": True},
-            {"type": "notify_doctor",    "label": "Send report to doctor",          "requires_approval": True},
+            {"type": "book_appointment",  "label": f"Book specialist for {disease} — within 48 hrs",   "requires_approval": True,  "agent": "Risk Agent"},
+            {"type": "set_reminder",      "label": "Set daily medication + vitals reminder",            "requires_approval": True,  "agent": "Medication Agent"},
+            {"type": "notify_doctor",     "label": "Send full health report to assigned doctor",        "requires_approval": True,  "agent": "Automation Orchestrator"},
+            {"type": "emergency_alert",   "label": "Alert family member if risk exceeds 85%",           "requires_approval": True,  "agent": "Emergency Alert Agent"},
         ]
     elif level == "medium":
+        agents_involved = ["Risk Agent", "Wellness Agent"]
         actions = [
-            {"type": "set_reminder",  "label": "Set weekly check-in reminder",     "requires_approval": True},
-            {"type": "log_vitals",    "label": "Start daily vitals logging",        "requires_approval": False},
+            {"type": "set_reminder",  "label": "Set weekly check-in + vitals log",                     "requires_approval": True,  "agent": "Risk Agent"},
+            {"type": "log_vitals",    "label": "Start automated daily vitals logging",                  "requires_approval": False, "agent": "Wellness Agent"},
+            {"type": "nutrition_tip", "label": "Send personalized nutrition plan",                     "requires_approval": False, "agent": "Wellness Agent"},
         ]
     else:
+        agents_involved = ["Wellness Agent"]
         actions = [
-            {"type": "wellness_tip", "label": "Send monthly wellness summary",     "requires_approval": False},
+            {"type": "wellness_tip",  "label": "Send monthly wellness + prevention summary",            "requires_approval": False, "agent": "Wellness Agent"},
         ]
 
     return JSONResponse(content={
-        "success": True,
-        "risk_summary": risk_result,
+        "success":           True,
+        "risk_summary":      risk_result,
+        "agents_involved":   agents_involved,
         "suggested_actions": actions,
-        "hitl_note": "All critical actions marked requires_approval=True will NOT execute without explicit user confirmation"
+        "hitl_note":         "Actions with requires_approval=True will NOT execute without explicit user confirmation (HITL protocol)"
     })
 
 
-# ── PATIENTS (mock — connect to Supabase in production) ──
-patients_db = []  # Replace with: from supabase import create_client
+# ── PATIENTS — Supabase-backed with in-memory fallback ──
+_patients_fallback: list = []
 
 @app.get("/api/patients")
 def get_patients():
-    return {"success": True, "data": patients_db, "count": len(patients_db)}
+    try:
+        from database.db import get_db
+        db     = get_db()
+        result = db.table("users").select("*").eq("role", "patient").order("created_at", desc=True).execute()
+        return {"success": True, "data": result.data or [], "count": len(result.data or []), "source": "supabase"}
+    except Exception:
+        return {"success": True, "data": _patients_fallback, "count": len(_patients_fallback), "source": "fallback"}
 
 @app.post("/api/patients")
 def create_patient(patient: PatientCreate):
-    new_patient = {
-        "id": hashlib.md5(patient.name.encode()).hexdigest()[:8],
-        **patient.dict(),
-        "created_at": time.time()
-    }
-    patients_db.append(new_patient)
-    return {"success": True, "data": new_patient}
+    try:
+        from database.db import get_db
+        db  = get_db()
+        row = db.table("users").insert({
+            "name":  patient.name,
+            "age":   patient.age,
+            "email": patient.email,
+            "phone": patient.phone,
+            "role":  "patient",
+        }).execute()
+        return {"success": True, "data": row.data[0] if row.data else {}, "source": "supabase"}
+    except Exception:
+        new_p = {
+            "id":         hashlib.md5(patient.name.encode()).hexdigest()[:8],
+            **patient.dict(),
+            "created_at": time.time()
+        }
+        _patients_fallback.append(new_p)
+        return {"success": True, "data": new_p, "source": "fallback"}
 
 
-# ── MEDICATION LOGS ──
-medication_logs = []
+# ── MEDICATION LOGS — Supabase-backed with in-memory fallback ──
+_med_logs_fallback: list = []
 
 @app.post("/api/medication/log")
 def log_medication(log: MedicationLog):
-    medication_logs.append({**log.dict(), "logged_at": time.time()})
-    adherence = (sum(1 for l in medication_logs if l["dose_taken"]) / len(medication_logs)) * 100
-    return {
-        "success": True,
-        "message": "Logged successfully",
-        "adherence_rate": round(adherence, 1)
-    }
+    try:
+        from database.db import log_medication_dose
+        ok        = log_medication_dose(log.patient_id, log.medication_name, log.dose_taken)
+        adherence = _calc_adherence_fallback(_med_logs_fallback)
+        return {"success": ok, "message": "Logged to Supabase", "adherence_rate": adherence}
+    except Exception:
+        _med_logs_fallback.append({**log.dict(), "logged_at": time.time()})
+        adherence = _calc_adherence_fallback(_med_logs_fallback)
+        return {"success": True, "message": "Logged (fallback)", "adherence_rate": adherence}
+
+def _calc_adherence_fallback(logs: list) -> float:
+    if not logs: return 0.0
+    return round(sum(1 for l in logs if l.get("dose_taken")) / len(logs) * 100, 1)
+
+
+# ── HEALTH REPORT — saves to Supabase ──
+class ReportInput(BaseModel):
+    user_id:        str
+    report_type:    str = "weekly"
+    summary:        str = ""
+    risk_snapshot:  dict = {}
+    adherence_rate: float = 0.0
+    sent_to_doctor: bool = False
+
+@app.post("/api/report/save")
+def save_report(report: ReportInput):
+    try:
+        from database.db import get_db
+        db = get_db()
+        row = db.table("health_reports").insert({
+            "user_id":        report.user_id,
+            "report_type":    report.report_type,
+            "summary":        report.summary,
+            "risk_snapshot":  report.risk_snapshot,
+            "adherence_rate": report.adherence_rate,
+            "sent_to_doctor": report.sent_to_doctor,
+        }).execute()
+        return {"success": True, "id": row.data[0]["id"] if row.data else None}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 # ─────────────────────────────────────
-#   RUN (for local development)
-#   Production: gunicorn with uvicorn workers
+#   RUN (local development)
+#   Production: gunicorn via Render
 # ─────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn

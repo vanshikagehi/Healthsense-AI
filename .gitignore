@@ -42,9 +42,8 @@ htmlcov/
 .coverage
 coverage.xml
 
-# -- ML / AI model artifacts (large files) --
-backend/models/*.pkl
-backend/models/*.joblib
+# -- ML model artifacts: .pkl/.joblib committed to repo (needed on Render deploy)
+# Only large Keras/SavedModel files excluded
 backend/models/*.h5
 backend/models/*.keras
 backend/models/saved_model/

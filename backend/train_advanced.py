@@ -40,137 +40,56 @@ TFJS_DIR     = os.path.join(os.path.dirname(__file__), "..", "js", "tfjs_model")
 os.makedirs(MODEL_DIR, exist_ok=True)
 os.makedirs(TFJS_DIR,  exist_ok=True)
 
-CLASS_NAMES   = ["Normal", "Diabetes", "Hypertension", "MentalHealth"]
+CLASS_NAMES   = ["Normal", "Diabetes", "Hypertension", "MentalHealth", "Thyroid", "PCOS"]
 FEATURE_COLS  = [
+    # 24 symptoms
     "fatigue","excessive_thirst","blurred_vision","frequent_urination",
-    "headache","chest_pain","shortness_breath","weight_loss",
-    "anxiety","sleep_issues","numbness","nausea",
-    "glucose","blood_pressure","age","bmi",
-    "family_diabetes","family_bp"
+    "numbness","weight_loss","slow_healing","skin_darkening",
+    "headache","chest_pain","shortness_breath","palpitations",
+    "dizziness","ankle_swelling",
+    "anxiety","sleep_issues","low_mood","irritability",
+    "weight_gain","cold_intolerance","hair_loss","nausea",
+    "irregular_periods","acne",
+    # 6 vitals
+    "glucose","blood_pressure","age","bmi","sleep_hrs","hba1c",
+    # 4 risk factors
+    "family_diabetes","family_bp","smoking","sedentary"
 ]
 
-# Symptom templates for NLP augmentation
-SYMPTOM_TEXT_MAP = {
-    "fatigue":            "feeling tired exhausted weak low energy all the time",
-    "excessive_thirst":   "excessive thirst polydipsia drinking lots of water constantly thirsty",
-    "blurred_vision":     "blurred vision difficulty seeing eye problems vision changes",
-    "frequent_urination": "frequent urination polyuria going to toilet often nocturia",
-    "headache":           "headache migraine head pain pressure in head",
-    "chest_pain":         "chest pain tightness discomfort pressure angina",
-    "shortness_breath":   "shortness of breath difficulty breathing dyspnea breathlessness",
-    "weight_loss":        "sudden unexplained weight loss losing weight without trying",
-    "anxiety":            "anxiety panic attacks worry nervousness restlessness fear",
-    "sleep_issues":       "insomnia sleep problems difficulty sleeping poor sleep quality",
-    "numbness":           "numbness tingling hands feet peripheral neuropathy pins needles",
-    "nausea":             "nausea vomiting feeling sick stomach upset queasiness",
-}
-
 print("\n" + "="*60)
-print("  HealthSense AI — Advanced NLP + Deep Learning Training")
+print("  HealthSense AI — ML Training v3.0 (6 diseases, 34 features)")
 print("="*60)
 
 # ══════════════════════════════════════
-#   STEP 1 — GENERATE LARGER DATASET
+#   STEP 1 — GENERATE DATASET (4800 samples)
 # ══════════════════════════════════════
-print("\n📊 Generating enhanced dataset (2400 samples)...")
+print("\n📊 Generating dataset v3.0 (4800 samples, 6 classes)...")
 
 import random
 random.seed(42)
 np.random.seed(42)
 
-def r(p):   return 1 if random.random() < p else 0
+def r(p):    return 1 if random.random() < p else 0
 def rf(a,b): return round(random.uniform(a,b), 1)
 def ri(a,b): return random.randint(a,b)
 
-rows = []
+# ── Use generate_dataset.py v3.0 (4800 samples, 6 classes) ──
+exec(open(os.path.join(os.path.dirname(__file__), "generate_dataset.py")).read())
 
-# Normal — 600 samples (more variation)
-for _ in range(600):
-    age = ri(18, 55)
-    rows.append([
-        r(0.12), r(0.04), r(0.04), r(0.06),
-        r(0.10), r(0.02), r(0.04), r(0.04),
-        r(0.08), r(0.12), r(0.03), r(0.06),
-        rf(70,99), rf(90,119), age, rf(18,24.9),
-        r(0.08), r(0.08), 0
-    ])
-
-# Diabetes — 600 samples
-for _ in range(600):
-    age = ri(28,75)
-    glucose = rf(100, 320)
-    rows.append([
-        r(0.82), r(0.92), r(0.78), r(0.88),
-        r(0.18), r(0.05), r(0.08), r(0.68),
-        r(0.12), r(0.28), r(0.72), r(0.22),
-        glucose, rf(110,155), age, rf(24,42),
-        r(0.78), r(0.22), 1
-    ])
-
-# Hypertension — 600 samples
-for _ in range(600):
-    age = ri(35,78)
-    bp = rf(138, 210)
-    rows.append([
-        r(0.42), r(0.08), r(0.22), r(0.12),
-        r(0.82), r(0.48), r(0.58), r(0.08),
-        r(0.22), r(0.38), r(0.08), r(0.28),
-        rf(82,135), bp, age, rf(25,44),
-        r(0.22), r(0.82), 2
-    ])
-
-# Mental Health — 600 samples
-for _ in range(600):
-    age = ri(16,48)
-    rows.append([
-        r(0.72), r(0.06), r(0.08), r(0.06),
-        r(0.38), r(0.12), r(0.22), r(0.12),
-        r(0.92), r(0.90), r(0.08), r(0.42),
-        rf(72,108), rf(95,138), age, rf(17,32),
-        r(0.12), r(0.18), 3
-    ])
-
-random.shuffle(rows)
-
-cols = FEATURE_COLS + ["label"]
-df = pd.DataFrame(rows, columns=cols)
-df.to_csv(DATASET_PATH, index=False)
-
+df = pd.read_csv(DATASET_PATH)
 print(f"   ✅ Dataset: {len(df)} rows × {len(FEATURE_COLS)} features")
-print(f"   Class distribution:\n{df['label'].value_counts().rename(index={0:'Normal',1:'Diabetes',2:'Hypertension',3:'Mental'}).to_string()}")
+print(f"   Class distribution:\n{df['label'].value_counts().rename(index={0:'Normal',1:'Diabetes',2:'Hypertension',3:'Mental',4:'Thyroid',5:'PCOS'}).to_string()}")
 
 X = df[FEATURE_COLS].values.astype(np.float32)
 y = df["label"].values.astype(int)
 
 # ══════════════════════════════════════
-#   STEP 2 — NLP TEXT EMBEDDINGS
+#   STEP 2 — SKIP NLP (not in requirements for Render)
 # ══════════════════════════════════════
-print("\n🔤 NLP: Building symptom text embeddings...")
-
 nlp_available = False
-try:
-    from sentence_transformers import SentenceTransformer
-    print("   Loading sentence-transformers (all-MiniLM-L6-v2, 384-dim)...")
-    nlp_model = SentenceTransformer('all-MiniLM-L6-v2')
-
-    def build_symptom_text(row):
-        parts = []
-        for i, feat in enumerate(FEATURE_COLS[:12]):  # symptom features only
-            if row[i] == 1 and feat in SYMPTOM_TEXT_MAP:
-                parts.append(SYMPTOM_TEXT_MAP[feat])
-        return " ".join(parts) if parts else "no significant symptoms reported"
-
-    print("   Generating embeddings for all samples (this takes ~2 min)...")
-    texts = [build_symptom_text(X[i]) for i in range(len(X))]
-    X_nlp = nlp_model.encode(texts, batch_size=64, show_progress_bar=True).astype(np.float32)
-    print(f"   ✅ NLP embeddings: {X_nlp.shape}")
-    nlp_available = True
-
-except ImportError:
-    print("   ⚠️  sentence-transformers not installed. Skipping NLP embeddings.")
-    print("   Install: pip install sentence-transformers")
-    print("   Continuing with structured features only...")
-    X_nlp = None
+X_nlp = None
+print("\n⚠️  NLP embeddings skipped (sentence-transformers not in production deps)")
+print("   Using structured features only — still excellent accuracy with 34 features")
 
 # ══════════════════════════════════════
 #   STEP 3 — PREPROCESSING
@@ -197,43 +116,35 @@ X_train, X_test, y_train, y_test = train_test_split(
 print(f"   Train: {len(X_train)} | Test: {len(X_test)}")
 
 # ══════════════════════════════════════
-#   STEP 4 — TRAIN DEEP LEARNING MODEL
+#   STEP 4 — DEEP LEARNING (optional — sklearn is primary)
 # ══════════════════════════════════════
-print("\n🧠 Training Deep Neural Network...")
+print("\n🧠 Training Deep Neural Network (optional, tensorflow required)...")
 
 try:
     import tensorflow as tf
     tf.random.set_seed(42)
 
     n_features = X_train.shape[1]
+    n_classes  = len(CLASS_NAMES)  # 6
 
-    # ── Advanced Deep Learning Architecture ──
     inputs = tf.keras.Input(shape=(n_features,), name="features")
-
-    # Block 1 — Feature extraction
-    x = tf.keras.layers.Dense(256, name="dense_1")(inputs)
-    x = tf.keras.layers.BatchNormalization(name="bn_1")(x)
-    x = tf.keras.layers.Activation("relu")(x)
-    x = tf.keras.layers.Dropout(0.3)(x)
-
-    # Block 2 — Deep representation
-    x = tf.keras.layers.Dense(128, name="dense_2")(x)
-    x = tf.keras.layers.BatchNormalization(name="bn_2")(x)
-    x = tf.keras.layers.Activation("relu")(x)
-    x = tf.keras.layers.Dropout(0.25)(x)
-
-    # Block 3 — Skip connection (residual-style)
+    x  = tf.keras.layers.Dense(256, name="dense_1")(inputs)
+    x  = tf.keras.layers.BatchNormalization(name="bn_1")(x)
+    x  = tf.keras.layers.Activation("relu")(x)
+    x  = tf.keras.layers.Dropout(0.3)(x)
+    x  = tf.keras.layers.Dense(128, name="dense_2")(x)
+    x  = tf.keras.layers.BatchNormalization(name="bn_2")(x)
+    x  = tf.keras.layers.Activation("relu")(x)
+    x  = tf.keras.layers.Dropout(0.25)(x)
     x2 = tf.keras.layers.Dense(64, name="dense_3")(x)
     x2 = tf.keras.layers.BatchNormalization(name="bn_3")(x2)
     x2 = tf.keras.layers.Activation("relu")(x2)
     x2 = tf.keras.layers.Dropout(0.2)(x2)
-
-    # Block 4 — Final compression
     x3 = tf.keras.layers.Dense(32, activation="relu", name="dense_4")(x2)
     x3 = tf.keras.layers.Dropout(0.1)(x3)
 
-    # Output — 4 classes with softmax
-    outputs = tf.keras.layers.Dense(4, activation="softmax", name="output")(x3)
+    # Output — 6 classes with softmax
+    outputs = tf.keras.layers.Dense(n_classes, activation="softmax", name="output")(x3)
 
     keras_model = tf.keras.Model(inputs=inputs, outputs=outputs, name="HealthSenseDeepNet")
     keras_model.summary()

@@ -1,6 +1,6 @@
 # render.yaml — Render.com deployment config
 # Deploys BOTH frontend (static) + backend (web service)
-# Free tier available on Render
+# Blueprint method: New+ → Blueprint → connect GitHub repo
 
 services:
 
@@ -8,22 +8,37 @@ services:
   - type: web
     name: healthsense-ai-backend
     runtime: python
-    buildCommand: pip install -r backend/requirements.txt
+    buildCommand: >
+      pip install -r backend/requirements.txt &&
+      python backend/generate_dataset.py &&
+      python backend/train_advanced.py
     startCommand: gunicorn backend.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 5
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: ENVIRONMENT
         value: production
+      - key: SUPABASE_URL
+        sync: false   # set manually in Render dashboard
+      - key: SUPABASE_ANON_KEY
+        sync: false   # set manually in Render dashboard
+      - key: SUPABASE_SERVICE_KEY
+        sync: false   # set manually in Render dashboard
+      - key: JWT_SECRET
+        sync: false   # set manually in Render dashboard
+      - key: ALLOWED_ORIGINS
+        value: https://healthsense-ai-frontend.onrender.com
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "200"
     healthCheckPath: /health
-    # Free tier: 512MB RAM, 0.1 CPU — enough for 20K-30K users with async
-    # Upgrade to $7/month for 512MB → 2GB for higher traffic
+    # Free tier: 512MB RAM — enough for demo + moderate traffic
+    # Upgrade to $7/month Starter plan for 20K+ concurrent users
 
   # ── FRONTEND — Static Site ──
   - type: web
     name: healthsense-ai-frontend
     runtime: static
-    buildCommand: echo "Static site — no build needed"
+    buildCommand: echo "Static site — no build step needed"
     staticPublishPath: frontend
     routes:
       - type: rewrite
@@ -32,6 +47,9 @@ services:
       - type: rewrite
         source: /js/*
         destination: /js/:splat
+      - type: rewrite
+        source: /assets/*
+        destination: /assets/:splat
       - type: rewrite
         source: /*
         destination: /index.html
@@ -45,3 +63,6 @@ services:
       - path: /js/*
         name: Cache-Control
         value: public, max-age=86400
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=604800
