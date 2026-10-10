@@ -146,7 +146,7 @@
           <p style="font-size:13px;color:var(--muted);">Your health agents have been monitoring since 6:00 AM · Last updated 2 min ago</p>
         </div>
         <div style="display:flex;gap:10px;">
-          <button onclick="showToast('📄 Weekly report generated and sent to Dr. Sharma!', 'success')" class="btn btn-outline btn-sm">📄 Weekly Report</button>
+          <button onclick="generateWeeklyReport()" class="btn btn-outline btn-sm">📄 Weekly Report</button>
           <button onclick="triggerHITL()" class="btn btn-warning btn-sm">⚠ 1 Approval Pending</button>
         </div>
       </div>
@@ -559,6 +559,122 @@
         <button onclick="document.getElementById('reports-modal').remove();showToast('Latest report downloaded ✓', 'success')" style="width:100%;margin-top:8px;padding:12px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;">📥 Download Latest Report</button>
       </div>`;
     document.body.appendChild(modal);
+  }
+
+  // ── Weekly Report — generate + AI confirmation ──
+  function generateWeeklyReport() {
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+    // Build the report content in memory
+    const reportLines = [
+      'HealthSense AI — Weekly Health Summary',
+      '========================================',
+      'Patient : Priya Verma',
+      'Generated: ' + today.toLocaleString(),
+      'Period   : Last 7 days',
+      '',
+      'VITALS SUMMARY',
+      '  • BP        : 130/84 mmHg avg  (↑ slightly elevated)',
+      '  • Glucose   : 118 mg/dL avg    (↑ pre-diabetic range)',
+      '  • Heart Rate: 82 bpm avg       (✓ normal)',
+      '  • Sleep     : 6.2 hrs avg      (↓ below target)',
+      '',
+      'RISK SCORES  (AI ML Engine v3.0)',
+      '  • Diabetes       : 78%  HIGH',
+      '  • Hypertension   : 62%  MEDIUM',
+      '  • Cardiovascular : 45%  MEDIUM',
+      '',
+      'MEDICATION ADHERENCE',
+      '  • Metformin 500mg (2x/day) : 92% ✓',
+      '  • Amlodipine 5mg  (1x/day) : 88% ✓',
+      '  • Vitamin D3 60K  (weekly) : 100% ✓',
+      '',
+      'AI AGENT ACTIVITY  (8 active agents)',
+      '  • Risk Agent           : 3 high-risk alerts raised',
+      '  • Medication Agent     : 14 reminders delivered',
+      '  • Nutrition Agent      : 7 meal suggestions sent',
+      '  • Cardio Agent         : BP spike detected Day 4',
+      '',
+      'NOTES FOR DOCTOR',
+      '  Patient reports increased thirst + fatigue last 3 days.',
+      '  Recommend HbA1c retest and glucose tolerance review.',
+      '',
+      '-- HealthSense AI v3.0 --'
+    ].join('\n');
+
+    // Show AI confirmation modal
+    const m = document.createElement('div');
+    m.id = 'weekly-report-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(5,9,20,0.88);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:24px;';
+    m.innerHTML = `
+      <div style="background:#0d1526;border:1px solid #1e2d4a;border-radius:18px;padding:32px;max-width:500px;width:100%;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🤖</div>
+          <div>
+            <div style="font-size:15px;font-weight:800;">Weekly Report Ready</div>
+            <div style="font-size:11px;color:#6b7fa3;">Generated: ${dateStr}</div>
+          </div>
+        </div>
+
+        <div style="margin:18px 0;padding:14px;background:#0e1a2e;border:1px solid #1e2d4a;border-radius:12px;">
+          <div style="font-size:12px;font-weight:700;color:#4f8ef7;margin-bottom:10px;">📊 Report Summary</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:#6b7fa3;">
+            <div>🩸 Glucose avg: <strong style="color:#f59e0b;">118 mg/dL</strong></div>
+            <div>💊 Adherence: <strong style="color:#00d4b4;">92%</strong></div>
+            <div>❤️ BP avg: <strong style="color:#f59e0b;">130/84</strong></div>
+            <div>😴 Sleep avg: <strong style="color:#ef4444;">6.2 hrs</strong></div>
+            <div>⚠️ Risk (Diabetes): <strong style="color:#ef4444;">78%</strong></div>
+            <div>🤖 Agents active: <strong style="color:#4f8ef7;">8/8</strong></div>
+          </div>
+        </div>
+
+        <div style="padding:14px 16px;background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.25);border-radius:10px;margin-bottom:18px;">
+          <div style="font-size:13px;font-weight:600;color:#4f8ef7;margin-bottom:6px;">🤖 AI Agent says:</div>
+          <div style="font-size:13px;color:#b0bfd8;line-height:1.6;">Aapki weekly health report ready hai. Isme BP trend, glucose readings, medication adherence aur risk scores included hain.<br><br><strong style="color:#e8edf5;">Kya main yeh report Dr. Sharma ko bhej dun?</strong></div>
+        </div>
+
+        <div style="display:flex;gap:10px;">
+          <button onclick="sendReportToDoctor('${dateStr}', document.getElementById('weekly-report-modal'))" style="flex:1;padding:12px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">✅ Haan, Dr. ko bhejo</button>
+          <button onclick="downloadReportOnly('${dateStr.replace(/'/g,"\\'")}', document.getElementById('weekly-report-modal'))" style="flex:1;padding:12px;background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;border-radius:9px;font-size:13px;cursor:pointer;">📥 Sirf Download karo</button>
+        </div>
+        <button onclick="document.getElementById('weekly-report-modal').remove()" style="width:100%;margin-top:10px;padding:10px;background:transparent;border:1px solid #1e2d4a;color:#6b7fa3;border-radius:9px;font-size:13px;cursor:pointer;">Cancel</button>
+      </div>`;
+    // Store report data on modal for download
+    m._reportLines = reportLines;
+    document.body.appendChild(m);
+  }
+
+  function sendReportToDoctor(dateStr, modal) {
+    modal.remove();
+    // Add to activity feed
+    const feed = document.querySelector('.timeline-item:last-child')?.parentElement;
+    if (feed) {
+      const item = document.createElement('div');
+      item.className = 'timeline-item';
+      item.style.marginBottom = '0';
+      item.innerHTML = `
+        <div><div class="timeline-dot" style="background:#4f8ef7;margin-top:4px;"></div></div>
+        <div>
+          <div style="font-size:13px;font-weight:600;">Weekly Report Sent ✓</div>
+          <div style="font-size:12px;color:var(--muted);">Sent to Dr. Sharma — ${dateStr}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Just now</div>
+        </div>`;
+      feed.appendChild(item);
+    }
+    showToast('✅ Weekly report Dr. Sharma ko bhej diya! Unhe notification mil gayi.', 'success');
+  }
+
+  function downloadReportOnly(dateStr, modal) {
+    const lines = modal._reportLines || 'Weekly Health Report\nGenerated: ' + dateStr;
+    const blob = new Blob([lines], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = 'Weekly_Health_Report_' + dateStr.replace(/\s+/g,'_') + '.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+    modal.remove();
+    showToast('📥 Report downloaded!', 'success');
   }
 
   function triggerHITL() {

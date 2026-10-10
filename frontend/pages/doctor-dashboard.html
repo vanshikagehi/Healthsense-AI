@@ -487,7 +487,7 @@
             <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 Today, 4:00 PM &nbsp;·&nbsp; 🕐 45 min &nbsp;·&nbsp; 📍 Room 2</div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
-            <button onclick="showDrToast('Opening patient notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+            <button onclick="openPatientNotes(this)" class="btn btn-outline btn-sm">📋 Notes</button>
             <button onclick="rescheduleAppt('Meera Sharma')" class="btn btn-outline btn-sm">↻ Reschedule</button>
           </div>
         </div>
@@ -505,7 +505,7 @@
             <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 Tomorrow, 11:00 AM &nbsp;·&nbsp; 🕐 30 min &nbsp;·&nbsp; 📍 Room 4</div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
-            <button onclick="showDrToast('Opening patient notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+            <button onclick="openPatientNotes(this)" class="btn btn-outline btn-sm">📋 Notes</button>
             <button onclick="rescheduleAppt('Arjun Singh')" class="btn btn-outline btn-sm">↻ Reschedule</button>
           </div>
         </div>
@@ -523,7 +523,7 @@
             <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 Tomorrow, 3:30 PM &nbsp;·&nbsp; 🕐 60 min &nbsp;·&nbsp; 📍 Room 1</div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
-            <button onclick="showDrToast('Opening patient notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+            <button onclick="openPatientNotes(this)" class="btn btn-outline btn-sm">📋 Notes</button>
             <button onclick="rescheduleAppt('Sunita Patel')" class="btn btn-outline btn-sm">↻ Reschedule</button>
           </div>
         </div>
@@ -541,7 +541,7 @@
             <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 Day after tomorrow, 9:00 AM &nbsp;·&nbsp; 🕐 20 min &nbsp;·&nbsp; 📍 Room 5</div>
           </div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
-            <button onclick="showDrToast('Opening patient notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+            <button onclick="openPatientNotes(this)" class="btn btn-outline btn-sm">📋 Notes</button>
             <button onclick="rescheduleAppt('Kavya Reddy')" class="btn btn-outline btn-sm">↻ Reschedule</button>
           </div>
         </div>
@@ -695,7 +695,7 @@
     if (pending) { pending.style.background = 'rgba(0,212,180,0.18)'; pending.style.color = 'var(--teal)'; pending.textContent = '✓ Confirmed'; }
     // Swap buttons to Notes + Reschedule
     btn.closest('div[style*="flex-shrink:0"]').innerHTML =
-      `<button onclick="showDrToast('Opening patient notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+      `<button onclick="openPatientNotes(this)" class="btn btn-outline btn-sm">📋 Notes</button>
        <button onclick="rescheduleAppt('${name}')" class="btn btn-outline btn-sm">↻ Reschedule</button>`;
     // Update card border to teal
     card.style.border = '1px solid rgba(0,212,180,0.3)';
@@ -849,7 +849,7 @@
         <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 ${date} &nbsp;·&nbsp; 🕐 ${time}</div>
       </div>
       <div style="display:flex;gap:8px;flex-shrink:0;">
-        <button onclick="showDrToast('Opening notes…','info')" class="btn btn-outline btn-sm">📋 Notes</button>
+        <button onclick="openPatientNotes(this)" class="btn btn-outline btn-sm">📋 Notes</button>
         <button onclick="rescheduleAppt('${name}')" class="btn btn-outline btn-sm">↻ Reschedule</button>
       </div>`;
     document.getElementById('appt-list').appendChild(card);
@@ -890,6 +890,84 @@
 
   function closePatientModal() {
     document.getElementById('patient-modal').style.display = 'none';
+  }
+
+  // ── Patient Notes Modal ──
+  function openPatientNotes(btn) {
+    // Get patient name from the card
+    const card = btn.closest('.appt-card') || btn.closest('[style*="border-radius:14px"]');
+    const nameEl = card ? card.querySelector('[style*="font-weight:700"]') : null;
+    const patientName = nameEl ? nameEl.textContent.trim() : 'Patient';
+    const noteKey = 'notes_' + patientName.replace(/\s+/g,'_');
+    const saved = localStorage.getItem(noteKey) || '';
+
+    const m = document.createElement('div');
+    m.id = 'patient-notes-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(5,9,20,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;';
+    m.innerHTML = `
+      <div style="background:#0d1526;border:1px solid #1e2d4a;border-radius:18px;padding:28px;max-width:500px;width:100%;max-height:85vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+          <div>
+            <div style="font-size:16px;font-weight:800;">📋 Notes — ${patientName}</div>
+            <div style="font-size:11px;color:#6b7fa3;margin-top:2px;">Doctor's private notes · Auto-saved locally</div>
+          </div>
+          <button onclick="document.getElementById('patient-notes-modal').remove()" style="background:#111d35;border:1px solid #1e2d4a;color:#e8edf5;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+
+        <!-- AI-generated note suggestion -->
+        <div style="padding:12px 14px;background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.2);border-radius:10px;margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:700;color:#4f8ef7;margin-bottom:6px;">🤖 AI Suggested Note:</div>
+          <div style="font-size:12px;color:#b0bfd8;line-height:1.6;">
+            ${patientName} — Latest vitals reviewed. BP trend slightly elevated. Recommend follow-up within 7 days. Medication adherence tracking active via HealthSense AI agents.
+          </div>
+          <button onclick="
+            const ta = document.getElementById('notes-textarea-${patientName.replace(/\s+/g,'')}');
+            ta.value += (ta.value ? '\n\n' : '') + ta.getAttribute('data-ai-note');
+          " style="margin-top:8px;padding:6px 12px;background:#111d35;border:1px solid #1e2d4a;color:#4f8ef7;border-radius:7px;font-size:11px;cursor:pointer;">➕ Insert AI Note</button>
+        </div>
+
+        <!-- Notes textarea -->
+        <textarea
+          id="notes-textarea-${patientName.replace(/\s+/g,'')}"
+          data-ai-note="${patientName} — Latest vitals reviewed. BP trend slightly elevated. Recommend follow-up within 7 days. Medication adherence tracking active via HealthSense AI agents."
+          rows="8"
+          placeholder="Yahan apne notes type karein... (auto-save hoga)"
+          style="width:100%;background:#0e1a2e;border:1px solid #1e2d4a;color:#e8edf5;padding:12px;border-radius:10px;font-size:13px;font-family:inherit;resize:vertical;outline:none;line-height:1.6;box-sizing:border-box;"
+          oninput="localStorage.setItem('${noteKey}', this.value)"
+        >${saved}</textarea>
+
+        <!-- Previous notes history -->
+        <div style="margin-top:14px;padding:12px;background:#0e1a2e;border:1px solid #1e2d4a;border-radius:10px;">
+          <div style="font-size:11px;font-weight:700;color:#6b7fa3;margin-bottom:8px;">📅 Previous Visit Notes</div>
+          <div style="font-size:12px;color:#6b7fa3;line-height:1.7;">
+            <div style="border-bottom:1px solid #1e2d4a;padding-bottom:8px;margin-bottom:8px;">
+              <span style="color:#4f8ef7;font-weight:600;">14 Jan 2025</span> — Glucose 118 mg/dL. HbA1c 6.4%. Continued Metformin. Next review in 4 weeks.
+            </div>
+            <div style="border-bottom:1px solid #1e2d4a;padding-bottom:8px;margin-bottom:8px;">
+              <span style="color:#4f8ef7;font-weight:600;">7 Jan 2025</span> — BP 134/86. Amlodipine dose reviewed. Patient reports fatigue and increased thirst.
+            </div>
+            <div>
+              <span style="color:#4f8ef7;font-weight:600;">24 Dec 2024</span> — Routine check. All parameters stable. Vitamin D3 60K prescribed.
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button onclick="
+            localStorage.setItem('${noteKey}', document.getElementById('notes-textarea-${patientName.replace(/\s+/g,'')}').value);
+            document.getElementById('patient-notes-modal').remove();
+            showDrToast('Notes saved for ${patientName} ✓','success');
+          " style="flex:1;padding:11px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">💾 Save Notes</button>
+          <button onclick="
+            if(confirm('Sare notes delete kar dun?')) {
+              localStorage.removeItem('${noteKey}');
+              document.getElementById('notes-textarea-${patientName.replace(/\s+/g,'')}').value='';
+              showDrToast('Notes cleared','info');
+            }
+          " style="padding:11px 16px;background:#111d35;border:1px solid #ef444440;color:#ef4444;border-radius:9px;font-size:13px;cursor:pointer;">🗑</button>
+        </div>
+      </div>`;
+    document.body.appendChild(m);
   }
 
   function openPatientDetail(name, risk) {
