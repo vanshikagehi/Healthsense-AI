@@ -214,6 +214,13 @@
             </div>
           </div>
 
+          <!-- Custom Symptoms Text Box -->
+          <div style="margin-bottom:16px;">
+            <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">✍️ Koi aur symptom? Yahan likhein (optional)</label>
+            <textarea id="custom-symptoms" class="input" rows="2" placeholder="e.g. aankhon mein jalan, haath pair thande rehte hain, pet mein dard, bahut jyada bhookh lagti hai..." style="font-size:13px;resize:vertical;min-height:60px;width:100%;padding:10px 12px;box-sizing:border-box;"></textarea>
+            <div id="custom-parsed" style="display:none;margin-top:8px;font-size:11px;color:#00d4b4;font-weight:600;"></div>
+          </div>
+
           <button onclick="runPrediction()" id="predict-btn" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:10px;">
             🧠 Run ML Prediction
           </button>
@@ -393,6 +400,52 @@
       selectedSymptoms.add(val);
       el.classList.add('selected');
     }
+  }
+
+  // ── Custom symptom text parser (Hindi + English) ──
+  const CUSTOM_KEYWORD_MAP = {
+    // Diabetes / Metabolic
+    'thirst|pyaas|pyas|paani|water|pani zyada':        'excessive_thirst',
+    'urine|urination|toilet|peshab|bar bar':            'frequent_urination',
+    'blurred|dhundhla|aankhon|aankh|vision|nazar':      'blurred_vision',
+    'numb|numb|sunn|jhanjhanahat|tingling|electric':    'numbness',
+    'weight loss|wajan kam|patla|vajan ghat':           'weight_loss',
+    'healing|wound|ghav|chhilna|slow heal':             'slow_healing',
+    'dark skin|kala|darkening|kaalaa|neck dark':        'skin_darkening',
+    // Cardiovascular
+    'headache|sar dard|sir dard|sir|migraine|sar':      'headache',
+    'chest|seena|dil dard|chest pain|dard':             'chest_pain',
+    'breath|saans|breathless|dam|takleef':              'shortness_breath',
+    'palpitation|dhadkan|heartbeat|dil tej|thump':      'palpitations',
+    'dizzy|chakkar|giddiness|chakker|spin':             'dizziness',
+    'swelling|sujan|ankle|pair|pav|edema':              'ankle_swelling',
+    // Mental
+    'anxiety|ghabrahat|tension|worry|chinta|dara':      'anxiety',
+    'sleep|neend|insomnia|raat|jagta|nahi sona':        'sleep_issues',
+    'sad|udaas|depressed|low mood|rona|khushi nahi':    'low_mood',
+    'irritat|gussa|chidchid|anger|irritable|khijhna':   'irritability',
+    // Thyroid/Hormonal
+    'weight gain|wajan badh|mota|bhari|vajan bada':     'weight_gain',
+    'cold|thanda|sardi|jukam|garmi nahi|thand':         'cold_intolerance',
+    'hair loss|baal girna|baal|jhad|hair fall':         'hair_loss',
+    'nausea|ulti|vomit|nausea|jee|jee machalna':        'nausea',
+    'period|mahina|irregular|mc|cycle|masik':           'irregular_periods',
+    'acne|pimple|muhase|facial hair|daadhi|baal face':  'acne',
+    // Fatigue
+    'fatigue|thakan|tired|kamzori|energy nahi|bore':    'fatigue',
+  };
+
+  function parseCustomSymptoms(text) {
+    if (!text || !text.trim()) return [];
+    const lower = text.toLowerCase();
+    const detected = new Set();
+    for (const [keywords, symptomKey] of Object.entries(CUSTOM_KEYWORD_MAP)) {
+      const kws = keywords.split('|');
+      if (kws.some(kw => lower.includes(kw.trim()))) {
+        detected.add(symptomKey);
+      }
+    }
+    return [...detected];
   }
 
   // ══════════════════════════════════════════════════════
@@ -639,9 +692,41 @@
   }
 
   async function runPrediction() {
-    if (selectedSymptoms.size === 0) {
-      window.HS && HS.showToast('Please select at least one symptom first', 'warning');
+    // Parse custom symptoms from text box
+    const customText  = document.getElementById('custom-symptoms').value;
+    const customParsed = parseCustomSymptoms(customText);
+
+    // Merge: chip symptoms + custom parsed symptoms
+    const allSymptoms = new Set([...selectedSymptoms, ...customParsed]);
+
+    if (allSymptoms.size === 0) {
+      window.HS && HS.showToast('Koi symptom select karo ya type karo', 'warning');
       return;
+    }
+
+    // Show which custom symptoms were detected
+    const parsedDiv = document.getElementById('custom-parsed');
+    if (customParsed.length > 0) {
+      const symLabels = {
+        excessive_thirst:'Excessive Thirst', frequent_urination:'Frequent Urination',
+        blurred_vision:'Blurred Vision', numbness:'Numbness', weight_loss:'Weight Loss',
+        slow_healing:'Slow Healing', skin_darkening:'Skin Darkening', headache:'Headache',
+        chest_pain:'Chest Pain', shortness_breath:'Shortness of Breath',
+        palpitations:'Palpitations', dizziness:'Dizziness', ankle_swelling:'Ankle Swelling',
+        anxiety:'Anxiety', sleep_issues:'Sleep Issues', low_mood:'Low Mood',
+        irritability:'Irritability', weight_gain:'Weight Gain', cold_intolerance:'Cold Intolerance',
+        hair_loss:'Hair Loss', nausea:'Nausea', irregular_periods:'Irregular Periods',
+        acne:'Acne', fatigue:'Fatigue'
+      };
+      parsedDiv.style.display = 'block';
+      parsedDiv.innerHTML = '✅ AI ne detect kiya: ' + customParsed.map(s =>
+        `<span style="background:rgba(0,212,180,0.15);border:1px solid rgba(0,212,180,0.4);border-radius:12px;padding:2px 8px;margin:0 3px;">${symLabels[s]||s}</span>`
+      ).join('');
+    } else if (customText.trim()) {
+      parsedDiv.style.display = 'block';
+      parsedDiv.innerHTML = '<span style="color:#f59e0b;">⚠ Koi specific symptom match nahi mila — chips se select karo</span>';
+    } else {
+      parsedDiv.style.display = 'none';
     }
 
     const glucose   = parseFloat(document.getElementById('glucose').value)    || 0;
@@ -654,7 +739,7 @@
     const smoking   = document.getElementById('smoking').value;
     const activity  = document.getElementById('activity').value;
     const gender    = document.getElementById('gender').value;
-    const syms      = [...selectedSymptoms];
+    const syms      = [...allSymptoms];
 
     document.getElementById('result-placeholder').style.display = 'none';
     document.getElementById('result-output').style.display      = 'none';
@@ -872,10 +957,12 @@
     ['glucose','bp','age','bmi','sleep_hrs','hba1c'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
-    document.getElementById('family').value   = 'none';
-    document.getElementById('smoking').value  = 'never';
-    document.getElementById('activity').value = 'active';
-    document.getElementById('gender').value   = 'female';
+    document.getElementById('family').value          = 'none';
+    document.getElementById('smoking').value         = 'never';
+    document.getElementById('activity').value        = 'active';
+    document.getElementById('gender').value          = 'female';
+    document.getElementById('custom-symptoms').value = '';
+    document.getElementById('custom-parsed').style.display = 'none';
     mlToast('Reset done — try a new prediction!', 'info');
   }
 </script>
