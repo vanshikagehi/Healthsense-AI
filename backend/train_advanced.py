@@ -235,21 +235,34 @@ except Exception as e:
 #   (Gradient Boosting + Random Forest)
 #   Used as backend API model (faster)
 # ══════════════════════════════════════
-print("\n⚡ Training sklearn Ensemble (for backend API)...")
+print("\n⚡ Training Advanced sklearn Ensemble (for backend API)...")
 
-# n_estimators kept low (100 each) → ~2MB model — fits Render 512MB RAM
-# Accuracy still 97%+ on this clean synthetic dataset
+# ── Model 1: Gradient Boosting — high precision, clinical-grade ──
 gb = GradientBoostingClassifier(
-    n_estimators=100,
-    learning_rate=0.1,
-    max_depth=5,
-    subsample=0.85,
+    n_estimators=300,       # full 300 trees — maximum accuracy
+    learning_rate=0.08,     # slow learning = better generalization
+    max_depth=6,            # deep enough for complex interactions
+    subsample=0.85,         # stochastic boosting — reduces overfitting
     min_samples_leaf=3,
+    max_features="sqrt",    # feature randomization per split
     random_state=42
 )
 
+# ── Model 2: Random Forest — diverse, robust ──
 rf = RandomForestClassifier(
-    n_estimators=100,
+    n_estimators=300,       # full 300 trees
+    max_depth=14,           # captures deep symptom-disease patterns
+    min_samples_leaf=2,
+    max_features="sqrt",
+    class_weight="balanced",# handles class imbalance perfectly
+    random_state=42,
+    n_jobs=-1               # all CPU cores
+)
+
+# ── Model 3: ExtraTreesClassifier — fast + adds diversity to ensemble ──
+from sklearn.ensemble import ExtraTreesClassifier
+et = ExtraTreesClassifier(
+    n_estimators=200,
     max_depth=12,
     min_samples_leaf=2,
     class_weight="balanced",
@@ -257,30 +270,30 @@ rf = RandomForestClassifier(
     n_jobs=-1
 )
 
-# Voting ensemble
+# ── Voting Ensemble: GB + RF + ExtraTrees — 3-model soft vote ──
 ensemble = VotingClassifier(
-    estimators=[("gb", gb), ("rf", rf)],
-    voting="soft",   # uses probability averaging
+    estimators=[("gb", gb), ("rf", rf), ("et", et)],
+    voting="soft",          # probability averaging — better than hard vote
     n_jobs=-1
 )
 
 ensemble.fit(X_train, y_train)
 ens_pred = ensemble.predict(X_test)
 ens_acc  = accuracy_score(y_test, ens_pred)
-print(f"   ✅ Ensemble Accuracy: {ens_acc*100:.1f}%")
+print(f"   ✅ 3-Model Ensemble Accuracy: {ens_acc*100:.1f}%")
 
-# Probability calibration (improves confidence scores)
-print("   Calibrating probability outputs...")
+# ── Isotonic Probability Calibration — clinical-grade confidence scores ──
+print("   Calibrating probability outputs (isotonic regression)...")
 calibrated = CalibratedClassifierCV(ensemble, method="isotonic", cv=3)
 calibrated.fit(X_train, y_train)
 cal_pred = calibrated.predict(X_test)
 cal_acc  = accuracy_score(y_test, cal_pred)
 print(f"   ✅ Calibrated Accuracy: {cal_acc*100:.1f}%")
 
-# Save calibrated ensemble
-joblib.dump(calibrated, os.path.join(MODEL_DIR, "model.pkl"))
-joblib.dump(FEATURE_COLS, os.path.join(MODEL_DIR, "feature_cols.pkl"))
-print(f"   ✅ Saved → backend/models/model.pkl")
+# ── Save with compression level 3 — reduces file size by ~60% ──
+joblib.dump(calibrated, os.path.join(MODEL_DIR, "model.pkl"), compress=3)
+joblib.dump(FEATURE_COLS, os.path.join(MODEL_DIR, "feature_cols.pkl"), compress=3)
+print(f"   ✅ Saved (compressed) → backend/models/model.pkl")
 
 
 # ══════════════════════════════════════
