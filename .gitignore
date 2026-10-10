@@ -42,9 +42,6 @@ htmlcov/
 .coverage
 coverage.xml
 
-# -- ML model artifacts: trained at Render build time (not committed to git)
-backend/models/*.pkl
-backend/models/*.joblib
 backend/models/*.h5
 backend/models/*.keras
 backend/models/saved_model/
