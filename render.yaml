@@ -27,6 +27,12 @@ services:
     staticPublishPath: frontend
     routes:
       - type: rewrite
+        source: /pages/*
+        destination: /pages/:splat
+      - type: rewrite
+        source: /js/*
+        destination: /js/:splat
+      - type: rewrite
         source: /*
         destination: /index.html
     headers:
