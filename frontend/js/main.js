@@ -111,8 +111,26 @@ function showApprovalModal({ title, description, onYes, onNo }) {
     </div>
   `;
   document.body.appendChild(modal);
-  document.getElementById('hitl-yes').onclick = () => { modal.remove(); if (onYes) onYes(); };
-  document.getElementById('hitl-no').onclick  = () => { modal.remove(); if (onNo)  onNo();  };
+  document.getElementById('hitl-yes').onclick = function() {
+    // Visual confirmed state — green, checkmark, disabled
+    this.style.background = 'linear-gradient(135deg,#00c96b,#00a855)';
+    this.style.transform  = 'scale(0.97)';
+    this.textContent      = '✓ Confirmed!';
+    this.disabled         = true;
+    document.getElementById('hitl-no').disabled = true;
+    document.getElementById('hitl-no').style.opacity = '0.4';
+    setTimeout(() => { modal.remove(); if (onYes) onYes(); }, 700);
+  };
+  document.getElementById('hitl-no').onclick = function() {
+    this.style.background = 'rgba(239,68,68,0.15)';
+    this.style.borderColor = '#ef4444';
+    this.style.color       = '#ef4444';
+    this.textContent       = '✗ Cancelled';
+    this.disabled          = true;
+    document.getElementById('hitl-yes').disabled = true;
+    document.getElementById('hitl-yes').style.opacity = '0.4';
+    setTimeout(() => { modal.remove(); if (onNo) onNo(); }, 500);
+  };
 }
 
 // ── Toast notification ──

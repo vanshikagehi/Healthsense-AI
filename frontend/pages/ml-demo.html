@@ -334,8 +334,8 @@
               <div style="font-size:12px;font-weight:700;color:#f59e0b;margin-bottom:8px;">🧑‍💼 AI Recommendation — Awaiting Your Approval</div>
               <div id="ai-recommendation" style="font-size:13px;color:var(--muted);margin-bottom:12px;"></div>
               <div style="display:flex;gap:8px;">
-                <button onclick="approveAction()" style="flex:1;padding:10px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">✓ Yes, Proceed</button>
-                <button onclick="mlToast('Action cancelled. No data shared.', 'info')" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer;">✗ No Thanks</button>
+                <button id="inline-yes-btn" onclick="approveAction(this)" style="flex:1;padding:10px;background:linear-gradient(135deg,#4f8ef7,#7c5cd8);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.3s;">✓ Yes, Proceed</button>
+                <button id="inline-no-btn" onclick="inlineDecline(this)" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.3s;">✗ No Thanks</button>
               </div>
             </div>
 
@@ -935,17 +935,50 @@
     setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 400); }, 3000);
   }
 
-  function approveAction() {
+  function approveAction(btn) {
+    // Immediately show confirmed state on the inline button
+    if (btn) {
+      btn.style.background  = 'linear-gradient(135deg,#00c96b,#00a855)';
+      btn.style.transform   = 'scale(0.97)';
+      btn.textContent       = '✓ Confirmed!';
+      btn.disabled          = true;
+      const noBtn = document.getElementById('inline-no-btn');
+      if (noBtn) { noBtn.disabled = true; noBtn.style.opacity = '0.4'; }
+    }
+
     if (window.HS && HS.showApprovalModal) {
       HS.showApprovalModal({
         title: 'Confirm AI Recommendation',
         description: document.getElementById('ai-recommendation').innerHTML,
         onYes: () => mlToast('✓ Done! Action confirmed and scheduled.', 'success'),
-        onNo:  () => mlToast('Cancelled. No action taken.', 'info')
+        onNo:  () => {
+          // If user cancels in modal, revert inline button
+          if (btn) {
+            btn.style.background = 'linear-gradient(135deg,#4f8ef7,#7c5cd8)';
+            btn.style.transform  = '';
+            btn.textContent      = '✓ Yes, Proceed';
+            btn.disabled         = false;
+            const noBtn = document.getElementById('inline-no-btn');
+            if (noBtn) { noBtn.disabled = false; noBtn.style.opacity = '1'; }
+          }
+          mlToast('Cancelled. No action taken.', 'info');
+        }
       });
     } else {
       mlToast('✓ Action approved and scheduled!', 'success');
     }
+  }
+
+  function inlineDecline(btn) {
+    // Red cancelled state on No Thanks button
+    btn.style.background  = 'rgba(239,68,68,0.15)';
+    btn.style.border      = '1px solid #ef4444';
+    btn.style.color       = '#ef4444';
+    btn.textContent       = '✗ Cancelled';
+    btn.disabled          = true;
+    const yesBtn = document.getElementById('inline-yes-btn');
+    if (yesBtn) { yesBtn.disabled = true; yesBtn.style.opacity = '0.4'; }
+    mlToast('Action cancelled. No data shared.', 'info');
   }
 
   function resetDemo() {
@@ -963,6 +996,24 @@
     document.getElementById('gender').value          = 'female';
     document.getElementById('custom-symptoms').value = '';
     document.getElementById('custom-parsed').style.display = 'none';
+    // Reset inline HITL buttons back to original state
+    const yBtn = document.getElementById('inline-yes-btn');
+    const nBtn = document.getElementById('inline-no-btn');
+    if (yBtn) {
+      yBtn.style.background = 'linear-gradient(135deg,#4f8ef7,#7c5cd8)';
+      yBtn.style.transform  = '';
+      yBtn.style.opacity    = '1';
+      yBtn.textContent      = '✓ Yes, Proceed';
+      yBtn.disabled         = false;
+    }
+    if (nBtn) {
+      nBtn.style.background  = 'transparent';
+      nBtn.style.border      = '1px solid var(--border)';
+      nBtn.style.color       = 'var(--text)';
+      nBtn.style.opacity     = '1';
+      nBtn.textContent       = '✗ No Thanks';
+      nBtn.disabled          = false;
+    }
     mlToast('Reset done — try a new prediction!', 'info');
   }
 </script>
