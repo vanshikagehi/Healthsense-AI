@@ -10,8 +10,7 @@ services:
     runtime: python
     buildCommand: >
       pip install -r backend/requirements.txt &&
-      python backend/generate_dataset.py &&
-      python backend/train_advanced.py
+      python -c "import os; os.path.exists('backend/models/model.pkl') or __import__('subprocess').run(['python','backend/train_advanced.py'],check=True)"
     startCommand: gunicorn backend.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 5
     envVars:
       - key: PYTHON_VERSION

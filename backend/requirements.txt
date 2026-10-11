@@ -1,19 +1,14 @@
 # ── Production API dependencies (Render deploy) ──
+# model.pkl trained with: sklearn 1.9.1, numpy 2.5.4, pandas 3.0.6, joblib 1.6.0
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 pydantic==2.5.0
 python-multipart==0.0.9
 httpx==0.26.0
 gunicorn==21.2.0
-scikit-learn==1.4.0
-numpy==1.26.4
-pandas==2.2.0
-joblib==1.3.2
+scikit-learn>=1.4.0,<2.0.0
+numpy>=1.26.0,<3.0.0
+pandas>=2.1.0,<4.0.0
+joblib>=1.3.0,<2.0.0
 supabase==2.3.4
 python-dotenv==1.0.0
-
-# ── Training-only dependencies (run locally, NOT needed on Render) ──
-# Uncomment below only when running: python backend/train_advanced.py
-# tensorflow==2.15.0
-# tensorflowjs==4.15.0
-# sentence-transformers==2.3.1
