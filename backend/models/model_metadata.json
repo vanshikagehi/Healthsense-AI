@@ -1,12 +1,38 @@
 {
-  "model_type": "Ensemble(GradientBoosting+RandomForest) + DeepLearning",
-  "nlp_used": false,
-  "accuracy": 99.7,
-  "ensemble_accuracy": 99.7,
-  "dl_accuracy": null,
-  "cv_mean": 99.6,
-  "cv_std": 0.2,
-  "features": [
+  "version": "4.0",
+  "model_type": "StackingClassifier(HistGB+RF+ET+GB) + LogisticRegression meta",
+  "accuracy": 98.27,
+  "stack_accuracy": 98.43,
+  "cv_mean": 98.42,
+  "cv_std": 0.11,
+  "auc_roc_macro": 0.9983,
+  "classes": [
+    "Normal",
+    "Diabetes",
+    "Hypertension",
+    "MentalHealth",
+    "Thyroid",
+    "PCOS"
+  ],
+  "n_features_raw": 34,
+  "n_features_eng": 46,
+  "engineered_features": [
+    "metabolic_score",
+    "cardio_score",
+    "mental_score",
+    "hormonal_score",
+    "glucose_bmi",
+    "bp_age",
+    "sleep_anxiety",
+    "hba1c_glucose",
+    "symptom_total",
+    "cardinal_diabetes",
+    "cardinal_thyroid",
+    "cardinal_pcos"
+  ],
+  "training_samples": 17003,
+  "test_samples": 3001,
+  "feature_cols": [
     "fatigue",
     "excessive_thirst",
     "blurred_vision",
@@ -42,15 +68,6 @@
     "smoking",
     "sedentary"
   ],
-  "classes": [
-    "Normal",
-    "Diabetes",
-    "Hypertension",
-    "MentalHealth",
-    "Thyroid",
-    "PCOS"
-  ],
-  "training_samples": 3840,
-  "test_samples": 960,
-  "notes": "Sigmoid-calibrated probabilities. Suitable for 20K-30K concurrent users via FastAPI async."
+  "dataset_version": "v4.0 (20004 samples, float severity, comorbidity overlap)",
+  "notes": "v4.0: HistGB+RF+ET+GB stacking, 20K samples, float symptom severity, 15% comorbidity overlap, 12 engineered features, isotonic calibration"
 }

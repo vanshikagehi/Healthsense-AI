@@ -122,9 +122,66 @@ class MedicationLog(BaseModel):
 
 
 # ─────────────────────────────────────
-#   ML PREDICTION LOGIC — v3.0
-#   24 symptoms · 6 diseases · full vitals
+#   ML PREDICTION LOGIC — v4.0
+#   34 raw features → 46 engineered → 6 diseases
 # ─────────────────────────────────────
+
+# These must match FEATURE_COLS order in train_advanced.py exactly
+_FEATURE_COLS_ORDER = [
+    "fatigue","excessive_thirst","blurred_vision","frequent_urination",
+    "numbness","weight_loss","slow_healing","skin_darkening",
+    "headache","chest_pain","shortness_breath","palpitations",
+    "dizziness","ankle_swelling",
+    "anxiety","sleep_issues","low_mood","irritability",
+    "weight_gain","cold_intolerance","hair_loss","nausea",
+    "irregular_periods","acne",
+    "glucose","blood_pressure","age","bmi","sleep_hrs","hba1c",
+    "family_diabetes","family_bp","smoking","sedentary"
+]
+_IDX = {c: i for i, c in enumerate(_FEATURE_COLS_ORDER)}
+
+def _engineer_features(X):
+    """Mirror of train_advanced.py engineer_features() — must stay in sync."""
+    gluc  = (X[:, _IDX["glucose"]]         - 70)  / 250
+    bp    = (X[:, _IDX["blood_pressure"]]  - 80)  / 130
+    age_n = (X[:, _IDX["age"]]             - 14)  / 66
+    bmi_n = (X[:, _IDX["bmi"]]             - 16)  / 32
+    slp   = (X[:, _IDX["sleep_hrs"]]       - 2)   / 8
+    hba   = (X[:, _IDX["hba1c"]]           - 4.5) / 8.5
+
+    metabolic_score  = (X[:, _IDX["fatigue"]] + X[:, _IDX["excessive_thirst"]] +
+                        X[:, _IDX["frequent_urination"]] + X[:, _IDX["numbness"]] +
+                        X[:, _IDX["slow_healing"]] + gluc + hba) / 7
+    cardio_score     = (X[:, _IDX["headache"]] + X[:, _IDX["chest_pain"]] +
+                        X[:, _IDX["shortness_breath"]] + X[:, _IDX["palpitations"]] +
+                        X[:, _IDX["dizziness"]] + bp + age_n) / 7
+    mental_score     = (X[:, _IDX["anxiety"]] + X[:, _IDX["sleep_issues"]] +
+                        X[:, _IDX["low_mood"]] + X[:, _IDX["irritability"]]) / 4
+    hormonal_score   = (X[:, _IDX["weight_gain"]] + X[:, _IDX["cold_intolerance"]] +
+                        X[:, _IDX["hair_loss"]] + X[:, _IDX["irregular_periods"]] +
+                        X[:, _IDX["acne"]]) / 5
+    glucose_bmi      = np.clip(gluc * bmi_n, 0, 1)
+    bp_age           = np.clip(bp   * age_n, 0, 1)
+    sleep_anxiety    = np.clip((1 - slp) * X[:, _IDX["anxiety"]], 0, 1)
+    hba1c_glucose    = np.clip(hba * gluc, 0, 1)
+    symptom_total    = np.mean(X[:, :24], axis=1)
+    cardinal_diabetes = (X[:, _IDX["excessive_thirst"]] +
+                         X[:, _IDX["frequent_urination"]] +
+                         X[:, _IDX["blurred_vision"]]) / 3
+    cardinal_thyroid  = (X[:, _IDX["cold_intolerance"]] +
+                         X[:, _IDX["hair_loss"]] +
+                         X[:, _IDX["weight_gain"]]) / 3
+    cardinal_pcos     = (X[:, _IDX["irregular_periods"]] +
+                         X[:, _IDX["acne"]] +
+                         X[:, _IDX["weight_gain"]]) / 3
+
+    new_feats = np.column_stack([
+        metabolic_score, cardio_score, mental_score, hormonal_score,
+        glucose_bmi, bp_age, sleep_anxiety, hba1c_glucose,
+        symptom_total, cardinal_diabetes, cardinal_thyroid, cardinal_pcos
+    ])
+    return np.hstack([X, new_feats])
+
 SYMPTOM_WEIGHTS = {
     # Metabolic / Diabetes
     "fatigue":            {"diabetes": 20, "hypertension": 10, "heart": 8,  "mental": 15, "thyroid": 22, "pcos": 12},
@@ -306,69 +363,99 @@ def health_check():
 @app.post("/api/predict", dependencies=[Depends(rate_limit)])
 def predict_risk(data: SymptomInput):
     """
-    ML prediction: 24 symptoms + vitals + lifestyle → 6 disease risks
-    Uses trained ensemble model if available, else rule-based v3.0 fallback
+    ML prediction v4.0: 34 raw features → 46 engineered → 6 disease probabilities
+    Uses trained stacking ensemble if available, else rule-based v3.0 fallback
     """
     if not data.symptoms:
         raise HTTPException(status_code=400, detail="At least one symptom is required")
 
-    # ── Use trained sklearn model if loaded ──
+    _CLASS_NAMES = ["Normal", "Diabetes", "Hypertension", "MentalHealth", "Thyroid", "PCOS"]
+
+    # ── Use trained sklearn model (v4.0) if loaded ──
     if _model is not None and _scaler is not None:
         try:
             sym_set = set(data.symptoms)
-            feat_order = [
-                "fatigue","excessive_thirst","blurred_vision","frequent_urination",
-                "headache","chest_pain","shortness_breath","weight_loss",
-                "anxiety","sleep_issues","numbness","nausea",
-                "glucose","blood_pressure","age","bmi","family_diabetes","family_bp"
-            ]
+
+            # Symptom severity: 1.0 if present (binary from API — model trained on 0/0.5/1.0
+            # but 1.0 for present symptoms is a valid input)
+            fh = data.family_history or "none"
             vec = [
-                1 if "fatigue"            in sym_set else 0,
-                1 if "excessive_thirst"   in sym_set else 0,
-                1 if "blurred_vision"     in sym_set else 0,
-                1 if "frequent_urination" in sym_set else 0,
-                1 if "headache"           in sym_set else 0,
-                1 if "chest_pain"         in sym_set else 0,
-                1 if "shortness_breath"   in sym_set else 0,
-                1 if "weight_loss"        in sym_set else 0,
-                1 if "anxiety"            in sym_set else 0,
-                1 if "sleep_issues"       in sym_set else 0,
-                1 if "numbness"           in sym_set else 0,
-                1 if "nausea"             in sym_set else 0,
-                data.glucose        or 90,
-                data.blood_pressure or 110,
-                data.age            or 35,
-                data.bmi            or 26.0,
-                1 if data.family_history in ["diabetes","both","diabetes_bp","all"] else 0,
-                1 if data.family_history in ["bp","both","diabetes_bp","all"]       else 0,
+                # 24 symptoms (float 0/0.5/1.0 — use 1.0 when symptom present)
+                1.0 if "fatigue"            in sym_set else 0.0,
+                1.0 if "excessive_thirst"   in sym_set else 0.0,
+                1.0 if "blurred_vision"     in sym_set else 0.0,
+                1.0 if "frequent_urination" in sym_set else 0.0,
+                1.0 if "numbness"           in sym_set else 0.0,
+                1.0 if "weight_loss"        in sym_set else 0.0,
+                1.0 if "slow_healing"       in sym_set else 0.0,
+                1.0 if "skin_darkening"     in sym_set else 0.0,
+                1.0 if "headache"           in sym_set else 0.0,
+                1.0 if "chest_pain"         in sym_set else 0.0,
+                1.0 if "shortness_breath"   in sym_set else 0.0,
+                1.0 if "palpitations"       in sym_set else 0.0,
+                1.0 if "dizziness"          in sym_set else 0.0,
+                1.0 if "ankle_swelling"     in sym_set else 0.0,
+                1.0 if "anxiety"            in sym_set else 0.0,
+                1.0 if "sleep_issues"       in sym_set else 0.0,
+                1.0 if "low_mood"           in sym_set else 0.0,
+                1.0 if "irritability"       in sym_set else 0.0,
+                1.0 if "weight_gain"        in sym_set else 0.0,
+                1.0 if "cold_intolerance"   in sym_set else 0.0,
+                1.0 if "hair_loss"          in sym_set else 0.0,
+                1.0 if "nausea"             in sym_set else 0.0,
+                # PCOS/hormonal symptoms — zero for male
+                (1.0 if "irregular_periods" in sym_set else 0.0) if data.gender != "male" else 0.0,
+                (1.0 if "acne"              in sym_set else 0.0) if data.gender != "male" else 0.0,
+                # 6 vitals
+                float(data.glucose        or 90),
+                float(data.blood_pressure or 110),
+                float(data.age            or 35),
+                float(data.bmi            or 26.0),
+                float(data.sleep_hrs      or 7.0),
+                float(data.hba1c          or 5.0),
+                # 4 risk factors
+                1.0 if fh in ["diabetes","both","diabetes_bp","all"] else 0.0,
+                1.0 if fh in ["bp","both","diabetes_bp","all"]       else 0.0,
+                1.0 if data.smoking  == "current"  else (0.5 if data.smoking  == "former"    else 0.0),
+                1.0 if data.activity == "sedentary" else (0.5 if data.activity == "low"      else 0.0),
             ]
-            X        = np.array([vec], dtype=np.float32)
-            X_scaled = _scaler.transform(X)
-            proba    = _model.predict_proba(X_scaled)[0]
-            CLASS_NAMES = ["Normal","Diabetes","Hypertension","MentalHealth"]
+
+            X_raw    = np.array([vec], dtype=np.float32)
+            X_eng    = _engineer_features(X_raw)          # 34 → 46 features
+            X_scaled = _scaler.transform(X_eng)            # StandardScaler fitted on 46 feats
+            proba    = _model.predict_proba(X_scaled)[0]   # shape (6,)
+
             risks = {
                 "diabetes":     int(round(proba[1] * 100)),
                 "hypertension": int(round(proba[2] * 100)),
                 "heart":        int(round(max(proba[1], proba[2]) * 0.65 * 100)),
                 "mental":       int(round(proba[3] * 100)),
-                "thyroid":      0,
-                "pcos":         0,
+                "thyroid":      int(round(proba[4] * 100)),
+                "pcos":         int(round(proba[5] * 100)) if data.gender != "male" else 0,
             }
-            # Augment thyroid/pcos from rule-based
-            rb = calculate_risk(data)
-            risks["thyroid"] = rb["risks"]["thyroid"]
-            risks["pcos"]    = rb["risks"]["pcos"]
 
-            top_idx   = int(np.argmax(proba[1:], axis=0)) + 1
-            top_score = int(round(max(proba[1:]) * 100))
-            top_name  = CLASS_NAMES[top_idx] if top_idx < len(CLASS_NAMES) else "Unknown"
-            level     = "high" if top_score >= 60 else "medium" if top_score >= 35 else "low"
-            contributing = list(sym_set)[:5]
-            explanation  = f"Trained ML model. Key factors: {', '.join(contributing)}"
+            top_idx   = int(np.argmax(proba))
+            top_score = int(round(proba[top_idx] * 100))
+            top_name  = _CLASS_NAMES[top_idx]
+            # If top is Normal but a disease has high risk, use that
+            if top_name == "Normal":
+                disease_proba = proba[1:]
+                top_dis_idx   = int(np.argmax(disease_proba))
+                top_dis_score = int(round(disease_proba[top_dis_idx] * 100))
+                if top_dis_score >= 25:
+                    top_idx   = top_dis_idx + 1
+                    top_score = top_dis_score
+                    top_name  = _CLASS_NAMES[top_idx]
+
+            level        = "high" if top_score >= 60 else "medium" if top_score >= 35 else "low"
+            contributing = [s for s in data.symptoms if s in SYMPTOM_WEIGHTS][:5]
+            explanation  = f"Stacking ensemble v4.0 (HistGB+RF+ET+GB). Key factors: {', '.join(contributing) or 'vitals'}"
             if data.glucose and data.glucose >= 100:
                 explanation += f". Glucose: {data.glucose} mg/dL"
             if data.blood_pressure and data.blood_pressure >= 130:
                 explanation += f". BP: {data.blood_pressure} mmHg"
+            if data.hba1c and data.hba1c >= 5.7:
+                explanation += f". HbA1c: {data.hba1c}%"
 
             result = {
                 "risks":          risks,
@@ -378,10 +465,12 @@ def predict_risk(data: SymptomInput):
                 "risk_level":     level,
                 "explanation":    explanation,
                 "recommendation": _get_recommendation(level, top_name.lower(), top_score),
-                "model":          "trained_ensemble_v3"
+                "model":          "stacking_ensemble_v4"
             }
-        except Exception:
+        except Exception as e:
+            # Fallback to rule-based if anything goes wrong
             result = calculate_risk(data)
+            result["model_error"] = str(e)
     else:
         result = calculate_risk(data)
 
