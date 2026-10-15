@@ -666,8 +666,10 @@
     const hL = h3_h*2.1 + bNorm*1.7 + cardiac_combo*1.3 + f.famBP*0.9 + aNorm*0.6 + f.smoker*0.8;
     const cL = h3_c*2.2 + cardiac_combo*2.0 + cardiac_full*2.8 + bNorm*1.0 + aNorm*0.7 + f.smoker*1.2;
     const mL = h3_m*2.3 + mental_load*1.8 + mental_depression*2.0 + slNorm*1.2 + f.anxiety*0.9;
-    const tL = h3_t*2.2 + thyroid_triad*2.2 + thyroid_full*2.8 + f.famT*1.4 + f.isFemale*0.6 + aNorm*0.4;
-    const pL = h3_p*2.4 + pcos_pattern*2.5 + pcos_full*3.2 + f.isFemale*2.0 + bmNorm*0.8 + insulin_resistance*1.2;
+    const tL = h3_t*2.2 + thyroid_triad*2.2 + thyroid_full*2.8 + f.famT*1.4 + aNorm*0.4;
+    // PCOS: isFemale alone does NOT boost — only boosts when cardinal PCOS symptoms present
+    const hasPcosSymptom = (f.periods > 0 || f.acne > 0) ? 1 : 0;
+    const pL = h3_p*2.4 + pcos_pattern*2.5 + pcos_full*3.2 + (f.isFemale * hasPcosSymptom * 1.5) + bmNorm*0.8 + insulin_resistance*1.2;
 
     // Clinical threshold boosters (ADA 2024, JNC8, WHO)
     const gBoost   = g  >= 200 ? 3.2 : g  >= 126 ? 2.2 : g  >= 100 ? 1.2 : g  >= 90 ? 0.4 : 0;
@@ -686,8 +688,9 @@
       hypertension: isotonicCalibrate(hL + bpBoost + aBoostH + smokBoost*0.8 + bmiBoost*0.5, 0.15, 0.92),
       heart:        isotonicCalibrate(cL + bpBoost*0.7 + aBoostC + smokBoost + gBoost*0.3, 0.10, 0.88),
       mental:       isotonicCalibrate(mL + slPenalty + stress_glucose*0.5, 0.15, 0.90),
-      thyroid:      isotonicCalibrate(tL + f.isFemale*0.8 + aBoostD*0.5, 0.12, 0.88),
-      pcos:         isotonicCalibrate((pL + bmiBoost*0.9 + insulin_resistance*0.8) * (gender==='male' ? 0.08 : 1), 0.10, 0.90),
+      thyroid:      isotonicCalibrate(tL + aBoostD*0.5, 0.12, 0.88),
+      // PCOS only meaningful for females with actual PCOS symptoms — zero it for male
+      pcos:         gender === 'male' ? 0 : isotonicCalibrate((pL + (hasPcosSymptom * bmiBoost*0.9) + (hasPcosSymptom * insulin_resistance*0.8)), 0.10, 0.90),
     };
   }
 
