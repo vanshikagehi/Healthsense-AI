@@ -2,6 +2,12 @@
 # Production-grade: crash-resistant, rule-based fallback, 20K+ concurrent users
 # Deploy on: Render Web Service
 
+import sys, io
+# Force UTF-8 output — prevents crash on Windows CP1252 terminals
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -35,12 +41,12 @@ def load_model():
                 with open(meta_path) as f:
                     meta = json.load(f)
                 _model_version = f"v{meta.get('version','?')}_{meta.get('model_type','ensemble')}"
-            print(f"✅ Trained ML model loaded from disk ({_model_version})")
+            print(f"[OK] Trained ML model loaded from disk ({_model_version})")
         else:
-            print("⚠️  No trained model found — using rule-based fallback")
+            print("[WARN] No trained model found — using rule-based fallback")
     except Exception as e:
         _model = _scaler = _feature_cols = None
-        print(f"⚠️  Model load failed ({e}) — using rule-based fallback")
+        print(f"[WARN] Model load failed ({e}) — using rule-based fallback")
 
 load_model()
 
