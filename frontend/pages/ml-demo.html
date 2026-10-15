@@ -937,7 +937,7 @@
       fatigue:            { diabetes:0.92, hypertension:0.78, mental:1.02, heart:0.82, thyroid:1.15 },
     };
 
-    const topKey = topName.toLowerCase().replace(' risk','').replace('mental health','mental').replace('thyroid risk','thyroid').replace('pcos risk','pcos');
+    const topKey = (topName || 'normal').toLowerCase().replace(' risk','').replace('mental health','mental').replace('thyroid risk','thyroid').replace('pcos risk','pcos');
     const contributions = syms
       .map(sym => ({ sym, w: attrWeights[sym]?.[topKey] || 0 }))
       .filter(c => c.w > 0)
