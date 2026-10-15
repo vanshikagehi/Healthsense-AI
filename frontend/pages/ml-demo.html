@@ -221,7 +221,7 @@
             <div id="custom-parsed" style="display:none;margin-top:8px;font-size:11px;color:#00d4b4;font-weight:600;"></div>
           </div>
 
-          <button onclick="runPrediction()" id="predict-btn" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:10px;">
+          <button onclick="runPrediction()" id="predict-btn" class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:10px;transition:all 0.3s ease;">
             🧠 Run ML Prediction
           </button>
         </div>
@@ -744,6 +744,14 @@
     const gender    = document.getElementById('gender').value;
     const syms      = [...allSymptoms];
 
+    // ── Button: loading state ──
+    const btn = document.getElementById('predict-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Analyzing...';
+    btn.style.background = 'linear-gradient(135deg, #2a3f6f, #1e2d4a)';
+    btn.style.opacity = '0.85';
+    btn.style.cursor = 'not-allowed';
+
     document.getElementById('result-placeholder').style.display = 'none';
     document.getElementById('result-output').style.display      = 'none';
     document.getElementById('result-loading').style.display     = 'block';
@@ -1019,8 +1027,19 @@
          <div style="margin-top:8px;font-size:12px;color:#00d4b4;">🤖 Shall I set a 3-month wellness reminder? <em>(One click approval)</em></div>`;
     document.getElementById('ai-recommendation').innerHTML = rec;
 
-    if (window.HS) HS.showToast('Deep Learning prediction complete — ' + confidence + '% confidence', 'success');
-    else mlToast('Deep Learning prediction complete — ' + confidence + '% confidence', 'success');
+    // ── Button: success state after prediction ──
+    const predictBtn = document.getElementById('predict-btn');
+    if (predictBtn) {
+      predictBtn.disabled = false;
+      predictBtn.textContent = '✅ Prediction Done — Run Again';
+      predictBtn.style.background = 'linear-gradient(135deg,#00c96b,#00a855)';
+      predictBtn.style.opacity = '1';
+      predictBtn.style.cursor = 'pointer';
+      predictBtn.style.transform = 'scale(1)';
+    }
+
+    if (window.HS) HS.showToast('ML prediction complete — ' + (isNormal ? 'Healthy Profile' : topName + ' ' + confidence + '%'), 'success');
+    else mlToast('ML prediction complete!', 'success');
   }
 
   function setBar(id, value, color) {
@@ -1098,9 +1117,19 @@
     document.getElementById('family').value          = 'none';
     document.getElementById('smoking').value         = 'never';
     document.getElementById('activity').value        = 'active';
-    document.getElementById('gender').value          = 'female';
+    document.getElementById('gender').value          = 'male';
     document.getElementById('custom-symptoms').value = '';
     document.getElementById('custom-parsed').style.display = 'none';
+    // ── Reset predict button back to original ──
+    const predictBtn = document.getElementById('predict-btn');
+    if (predictBtn) {
+      predictBtn.disabled = false;
+      predictBtn.textContent = '🧠 Run ML Prediction';
+      predictBtn.style.background = '';
+      predictBtn.style.opacity = '1';
+      predictBtn.style.cursor = 'pointer';
+      predictBtn.style.transform = '';
+    }
     // Reset inline HITL buttons back to original state
     const yBtn = document.getElementById('inline-yes-btn');
     const nBtn = document.getElementById('inline-no-btn');
