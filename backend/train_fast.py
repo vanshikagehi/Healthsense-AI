@@ -231,7 +231,7 @@ print(f"      Accuracy: {acc*100:.2f}% | Train time: {elapsed:.0f}s")
 
 # Save model
 joblib.dump(model, os.path.join(MODEL_DIR, "model.pkl"), compress=6)
-print(f"      Saved → backend/models/model.pkl")
+print("      Saved -> backend/models/model.pkl")
 
 
 # ══════════════════════════════════════════════════════
@@ -300,5 +300,5 @@ if auc: print(f"  AUC-ROC     : {auc:.4f}")
 print(f"  Samples     : {len(X_train):,} train / {len(X_test):,} test")
 print(f"  Features    : {len(FEATURE_COLS)} raw + 12 eng = {len(ENGINEERED_COLS)}")
 print(f"  Total time  : {total_time:.0f}s  (v5.0 was ~5-10 min)")
-print(f"  Saved       : backend/models/model.pkl")
+print("  Saved       : backend/models/model.pkl")
 print("="*60)

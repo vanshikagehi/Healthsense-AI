@@ -1,11 +1,10 @@
 {
-  "version": "5.0",
-  "model_type": "SoftVoting(hgb+xgb+lgb+rf+et+gb) + IsotonicCalibration",
-  "accuracy": 98.73,
-  "vote_accuracy": 98.77,
-  "cv_mean": 98.55,
-  "cv_std": 0.09,
-  "auc_roc_macro": 0.9996,
+  "version": "5.1-fast",
+  "model_type": "XGBClassifier",
+  "accuracy": 98.43,
+  "cv_mean": 98.06,
+  "cv_std": 0.22,
+  "auc_roc_macro": 0.9994,
   "classes": [
     "Normal",
     "Diabetes",
@@ -30,8 +29,8 @@
     "cardinal_thyroid",
     "cardinal_pcos"
   ],
-  "training_samples": 42503,
-  "test_samples": 7501,
+  "training_samples": 17003,
+  "test_samples": 3001,
   "feature_cols": [
     "fatigue",
     "excessive_thirst",
@@ -68,14 +67,9 @@
     "smoking",
     "sedentary"
   ],
-  "dataset_version": "v5.0 (50004 samples, 7 sub-types, 20% comorbidity overlap)",
+  "dataset_version": "v5.1-fast (20004 samples, 7 sub-types, 20% comorbidity)",
   "base_models": [
-    "hgb",
-    "xgb",
-    "lgb",
-    "rf",
-    "et",
-    "gb"
+    "XGBClassifier"
   ],
-  "notes": "v5.0: 6-model soft voting (HistGB+XGB+LGB+RF+ET+GB), 50K samples, 7 sub-types per class, 20% comorbidity overlap, 12 engineered features, isotonic calibration"
+  "notes": "v5.1-fast: single XGBClassifier, 20K samples, 12 engineered features. ~5-10x faster than v5.0 6-model ensemble. Accuracy comparable on synthetic data."
 }
