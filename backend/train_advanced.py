@@ -176,7 +176,7 @@ def engineer_features(X):
     return np.hstack([X, new_feats])
 
 X_eng = engineer_features(X_raw)
-print(f"      Features: {X_raw.shape[1]} → {X_eng.shape[1]} (added {X_eng.shape[1]-X_raw.shape[1]} features)")
+print(f"      Features: {X_raw.shape[1]} -> {X_eng.shape[1]} (added {X_eng.shape[1]-X_raw.shape[1]} features)")
 
 ENGINEERED_COLS = FEATURE_COLS + [
     "metabolic_score","cardio_score","mental_score","hormonal_score",
@@ -235,7 +235,6 @@ if HAS_XGB:
         gamma=0.1,
         reg_alpha=0.05,
         reg_lambda=1.0,
-        use_label_encoder=False,
         eval_metric="mlogloss",
         random_state=42,
         n_jobs=-1,
