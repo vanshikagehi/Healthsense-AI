@@ -624,8 +624,10 @@
     const metabolic_syndrome  = (gNorm>0?1:0) * (bNorm>0?1:0) * (bmNorm>0?1:0);
     const thyroid_triad       = f.wgain * f.cold * f.fatigue;
     const thyroid_full        = f.wgain * f.cold * f.hairloss;
-    const pcos_pattern        = f.periods * f.acne * f.isFemale;
-    const pcos_full           = f.periods * f.acne * f.wgain * f.isFemale;
+    // PCOS gate: if no irregular_periods AND no acne → PCOS is impossible
+    const pcosGate       = (f.periods > 0 || f.acne > 0) && f.isFemale ? 1 : 0;
+    const pcos_pattern   = f.periods * f.acne * f.isFemale;
+    const pcos_full      = f.periods * f.acne * f.wgain * f.isFemale;
     const insulin_resistance  = (bmNorm>0?1:0) * f.darkening * f.fatigue;
     const sleep_metabolic     = slNorm * gNorm;
     const stress_glucose      = f.anxiety * gNorm;
@@ -640,10 +642,12 @@
     const h1_c2 = denseLayer([bNorm,aNorm,f.famH,f.smoker,f.sedentary,bmNorm,gNorm],[1.05,0.95,1.40,1.75,0.85,0.68,0.55],-0.8,'relu');
     const h1_m1 = denseLayer([f.anxiety,f.sleep,f.fatigue,f.lowmood,f.irritable,f.headache,aNorm,slNorm,mental_load,mental_depression,stress_glucose],[2.15,1.95,1.02,2.05,1.68,0.72,0.32,1.45,2.50,2.75,0.85],-1.4,'relu');
     const h1_m2 = denseLayer([f.lowmood,f.irritable,f.sleep,slNorm,f.fatigue,f.anxiety],[2.20,1.85,1.60,1.40,0.95,1.10],-1.0,'relu');
-    const h1_t1 = denseLayer([f.wgain,f.cold,f.fatigue,f.hairloss,f.nausea,f.sleep,aNorm,f.isFemale,f.famT,thyroid_triad,thyroid_full,bmNorm],[1.85,1.92,1.15,1.78,0.82,0.95,0.55,1.20,1.65,2.40,2.85,0.75],-1.3,'relu');
+    // Thyroid: remove isFemale bias (thyroid affects all genders)
+    const h1_t1 = denseLayer([f.wgain,f.cold,f.fatigue,f.hairloss,f.nausea,f.sleep,aNorm,f.famT,thyroid_triad,thyroid_full,bmNorm],[1.85,1.92,1.15,1.78,0.82,0.95,0.55,1.65,2.40,2.85,0.75],-1.3,'relu');
     const h1_t2 = denseLayer([f.cold,f.hairloss,f.wgain,f.fatigue,f.famT,slNorm],[1.90,1.75,1.55,0.88,1.45,0.72],-0.9,'relu');
-    const h1_p1 = denseLayer([f.periods,f.acne,f.wgain,f.fatigue,f.isFemale,aNorm,bmNorm,f.darkening,pcos_pattern,pcos_full,insulin_resistance],[2.35,1.95,1.65,0.85,2.50,0.45,0.95,1.42,2.80,3.20,1.55],-1.8,'relu');
-    const h1_p2 = denseLayer([f.periods,f.acne,f.hairloss,f.isFemale,bmNorm,gNorm],[2.20,1.80,0.95,2.40,0.88,0.72],-1.2,'relu');
+    // PCOS layers: gated — zero output if no PCOS cardinal symptoms
+    const h1_p1 = pcosGate ? denseLayer([f.periods,f.acne,f.wgain,f.darkening,pcos_pattern,pcos_full,insulin_resistance,bmNorm],[2.35,1.95,1.65,1.42,2.80,3.20,1.55,0.95],-1.8,'relu') : 0;
+    const h1_p2 = pcosGate ? denseLayer([f.periods,f.acne,f.hairloss,bmNorm,gNorm],[2.20,1.80,0.95,0.88,0.72],-1.2,'relu') : 0;
 
     // Layer 2
     const h2_d = denseLayer([h1_d1,h1_d2,h1_d3,gNorm,haNorm,f.famD,bmNorm],[1.50,1.20,1.05,1.00,1.35,0.80,0.68],-0.6,'tanh');
@@ -651,7 +655,8 @@
     const h2_c = denseLayer([h1_c1,h1_c2,bNorm,f.famH,f.smoker,aNorm,cardiac_combo],[1.55,1.15,0.85,0.95,1.20,0.70,1.30],-0.7,'tanh');
     const h2_m = denseLayer([h1_m1,h1_m2,f.anxiety,f.sleep,slNorm,mental_load],[1.60,1.30,0.75,0.65,0.95,1.10],-0.5,'tanh');
     const h2_t = denseLayer([h1_t1,h1_t2,f.cold,f.hairloss,f.famT,aNorm],[1.65,1.35,0.90,0.85,1.10,0.50],-0.6,'tanh');
-    const h2_p = denseLayer([h1_p1,h1_p2,f.periods,f.acne,f.isFemale,bmNorm],[1.70,1.30,1.00,0.90,1.50,0.75],-0.8,'tanh');
+    // PCOS layer 2: gated too
+    const h2_p = pcosGate ? denseLayer([h1_p1,h1_p2,f.periods,f.acne,bmNorm],[1.70,1.30,1.00,0.90,0.75],-0.8,'tanh') : 0;
 
     // Layer 3 (cross-disease)
     const h3_d = denseLayer([h2_d,h2_t,h2_p,metabolic_syndrome,insulin_resistance],[1.8,0.45,0.38,0.72,0.85],-0.4,'relu');
