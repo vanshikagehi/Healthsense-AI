@@ -11,16 +11,12 @@ anyio==3.7.1
 sniffio==1.3.1
 starlette==0.35.0
 
-# Core ML stack
+# Core ML stack (lightweight — fits Render free 512MB)
 scikit-learn>=1.4.0,<2.0.0
 numpy>=1.26.0,<3.0.0
 pandas>=2.1.0,<4.0.0
 joblib>=1.3.0,<2.0.0
 
-# Advanced boosting models
-xgboost>=2.0.0,<3.0.0
-lightgbm>=4.0.0,<5.0.0
-
-# Database + utils — upgraded to avoid dependency hell
+# Database + utils
 supabase>=2.4.0
 python-dotenv==1.0.0
