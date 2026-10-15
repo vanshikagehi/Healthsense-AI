@@ -14,23 +14,10 @@ services:
     name: healthsense-ai-backend
     runtime: python
     # Build: install deps + only train if model.pkl is missing (avoids 10-min timeout)
-    buildCommand: >
-      pip install -r backend/requirements.txt &&
-      python -c "
-      import os, sys
-      model_path = 'backend/models/model.pkl'
-      if not os.path.exists(model_path):
-          print('model.pkl not found — training now (fast v5.1)...')
-          result = __import__('subprocess').run(
-              ['python', 'backend/train_fast.py'],
-              check=False, capture_output=False
-          )
-          if result.returncode != 0:
-              print('Training failed — falling back to rule-based mode')
-      else:
-          print('model.pkl found — skipping training')
-      "
-    startCommand: gunicorn backend.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 5 --max-requests 1000 --max-requests-jitter 100
+    # model.pkl is pre-trained locally (XGBoost 98.43%) and committed via Git LFS
+    # No training on Render = no OOM, fast startup
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn backend.main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
