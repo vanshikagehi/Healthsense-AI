@@ -1,6 +1,11 @@
 # render.yaml — Render.com deployment config
 # Deploys BOTH frontend (static) + backend (web service)
 # Blueprint method: New+ → Blueprint → connect GitHub repo
+#
+# IMPORTANT: model.pkl is pre-trained and committed to repo.
+# Training does NOT run on deploy — it only trains if model is missing.
+# To retrain fast (~1-2 min): run `python backend/train_fast.py` locally, commit model files.
+# To retrain full ensemble (~5-10 min): run `python backend/train_advanced.py` locally.
 
 services:
 
@@ -8,10 +13,24 @@ services:
   - type: web
     name: healthsense-ai-backend
     runtime: python
+    # Build: install deps + only train if model.pkl is missing (avoids 10-min timeout)
     buildCommand: >
       pip install -r backend/requirements.txt &&
-      python -c "import os; os.path.exists('backend/models/model.pkl') or __import__('subprocess').run(['python','backend/train_advanced.py'],check=True)"
-    startCommand: gunicorn backend.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 5
+      python -c "
+      import os, sys
+      model_path = 'backend/models/model.pkl'
+      if not os.path.exists(model_path):
+          print('model.pkl not found — training now (fast v5.1)...')
+          result = __import__('subprocess').run(
+              ['python', 'backend/train_fast.py'],
+              check=False, capture_output=False
+          )
+          if result.returncode != 0:
+              print('Training failed — falling back to rule-based mode')
+      else:
+          print('model.pkl found — skipping training')
+      "
+    startCommand: gunicorn backend.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 5 --max-requests 1000 --max-requests-jitter 100
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -30,8 +49,8 @@ services:
       - key: RATE_LIMIT_PER_MINUTE
         value: "200"
     healthCheckPath: /health
-    # Free tier: 512MB RAM — enough for demo + moderate traffic
-    # Upgrade to $7/month Starter plan for 20K+ concurrent users
+    # Free tier: 512MB RAM
+    # ⚠️ If model.pkl > 200MB after training, upgrade to Render Starter ($7/mo) for 1GB RAM
 
   # ── FRONTEND — Static Site ──
   - type: web

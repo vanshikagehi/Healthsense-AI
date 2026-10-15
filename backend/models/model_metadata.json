@@ -1,11 +1,10 @@
 {
-  "version": "4.0",
-  "model_type": "StackingClassifier(HistGB+RF+ET+GB) + LogisticRegression meta",
-  "accuracy": 98.27,
-  "stack_accuracy": 98.43,
-  "cv_mean": 98.42,
-  "cv_std": 0.11,
-  "auc_roc_macro": 0.9983,
+  "version": "5.1-fast",
+  "model_type": "HistGradientBoostingClassifier",
+  "accuracy": 98.17,
+  "cv_mean": 98.14,
+  "cv_std": 0.16,
+  "auc_roc_macro": 0.9993,
   "classes": [
     "Normal",
     "Diabetes",
@@ -68,6 +67,9 @@
     "smoking",
     "sedentary"
   ],
-  "dataset_version": "v4.0 (20004 samples, float severity, comorbidity overlap)",
-  "notes": "v4.0: HistGB+RF+ET+GB stacking, 20K samples, float symptom severity, 15% comorbidity overlap, 12 engineered features, isotonic calibration"
+  "dataset_version": "v5.1-fast (20004 samples, 7 sub-types, 20% comorbidity)",
+  "base_models": [
+    "HistGradientBoostingClassifier"
+  ],
+  "notes": "v5.1-fast: single HistGradientBoostingClassifier, 20K samples, 12 engineered features. ~5-10x faster than v5.0 6-model ensemble. Accuracy comparable on synthetic data."
 }

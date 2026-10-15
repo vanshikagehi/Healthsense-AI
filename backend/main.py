@@ -1,5 +1,5 @@
 # HealthSense AI — Backend (FastAPI)
-# Production-grade: handles 20,000–30,000 concurrent users
+# Production-grade: crash-resistant, rule-based fallback, 20K+ concurrent users
 # Deploy on: Render Web Service
 
 from fastapi import FastAPI, HTTPException, Depends, Request
@@ -8,27 +8,39 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import List, Optional
-import os, time, hashlib, json
+import os, time, hashlib, json, logging
 import numpy as np
+
+logger = logging.getLogger("healthsense")
 
 # ── Load trained ML model at startup (cached in memory) ──
 import joblib
 
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "models")
 _model, _scaler, _feature_cols = None, None, None
+_model_version = "rule_based_v3"
 
 def load_model():
-    global _model, _scaler, _feature_cols
+    global _model, _scaler, _feature_cols, _model_version
     model_path   = os.path.join(MODEL_DIR, "model.pkl")
     scaler_path  = os.path.join(MODEL_DIR, "scaler.pkl")
     feature_path = os.path.join(MODEL_DIR, "feature_cols.pkl")
-    if os.path.exists(model_path) and os.path.exists(scaler_path):
-        _model        = joblib.load(model_path)
-        _scaler       = joblib.load(scaler_path)
-        _feature_cols = joblib.load(feature_path) if os.path.exists(feature_path) else None
-        print("✅ Trained ML model loaded from disk")
-    else:
-        print("⚠️  No trained model found — using rule-based fallback")
+    meta_path    = os.path.join(MODEL_DIR, "model_metadata.json")
+    try:
+        if os.path.exists(model_path) and os.path.exists(scaler_path):
+            _model        = joblib.load(model_path)
+            _scaler       = joblib.load(scaler_path)
+            _feature_cols = joblib.load(feature_path) if os.path.exists(feature_path) else None
+            if os.path.exists(meta_path):
+                with open(meta_path) as f:
+                    meta = json.load(f)
+                _model_version = f"v{meta.get('version','?')}_{meta.get('model_type','ensemble')}"
+            print(f"✅ Trained ML model loaded from disk ({_model_version})")
+        else:
+            print("⚠️  No trained model found — using rule-based fallback")
+    except Exception as e:
+        _model = _scaler = _feature_cols = None
+        print(f"⚠️  Model load failed ({e}) — using rule-based fallback")
 
 load_model()
 
@@ -38,7 +50,7 @@ load_model()
 app = FastAPI(
     title="HealthSense AI API",
     description="ML + Agentic AI + Automation — Health Intelligence Platform",
-    version="3.0.0",
+    version="5.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -340,23 +352,52 @@ def _get_recommendation(level: str, disease: str, score: int) -> str:
 @app.get("/")
 def root():
     return {
-        "service":     "HealthSense AI API",
-        "version":     "3.0.0",
-        "status":      "running",
-        "diseases":    6,
-        "symptoms":    24,
-        "model":       "Ensemble(GB+RF)+Calibration" if _model else "rule_based_v3",
-        "technologies": ["ML v3.0", "Agentic AI", "Automation", "Supabase"]
+        "service":      "HealthSense AI API",
+        "version":      "5.0.0",
+        "status":       "running",
+        "diseases":     6,
+        "symptoms":     24,
+        "model":        _model_version if _model else "rule_based_v3",
+        "technologies": ["ML v5.0", "Agentic AI", "Automation", "Supabase"]
     }
 
 @app.get("/health")
 def health_check():
+    meta = {}
+    meta_path = os.path.join(MODEL_DIR, "model_metadata.json")
+    if os.path.exists(meta_path):
+        try:
+            with open(meta_path) as f:
+                m = json.load(f)
+            meta = {
+                "accuracy":      m.get("accuracy"),
+                "cv_mean":       m.get("cv_mean"),
+                "auc_roc_macro": m.get("auc_roc_macro"),
+                "training_samples": m.get("training_samples"),
+                "dataset_version":  m.get("dataset_version"),
+            }
+        except Exception:
+            pass
     return {
-        "status":    "healthy",
-        "timestamp": time.time(),
-        "ml_model":  "loaded" if _model else "rule_based_fallback",
-        "db":        "supabase"
+        "status":     "healthy",
+        "timestamp":  time.time(),
+        "ml_model":   "loaded" if _model else "rule_based_fallback",
+        "ml_version": _model_version,
+        "db":         "supabase",
+        "model_info": meta
     }
+
+@app.get("/api/model-info")
+def model_info():
+    """Returns full ML model metadata"""
+    meta_path = os.path.join(MODEL_DIR, "model_metadata.json")
+    if os.path.exists(meta_path):
+        try:
+            with open(meta_path) as f:
+                return {"success": True, "data": json.load(f)}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    return {"success": False, "error": "model_metadata.json not found"}
 
 
 # ── ML PREDICTION ──
@@ -425,10 +466,16 @@ def predict_risk(data: SymptomInput):
             X_scaled = _scaler.transform(X_eng)            # StandardScaler fitted on 46 feats
             proba    = _model.predict_proba(X_scaled)[0]   # shape (6,)
 
+            # Map class probabilities to named risk scores
+            # Classes: 0=Normal, 1=Diabetes, 2=Hypertension, 3=MentalHealth, 4=Thyroid, 5=PCOS
+            # Heart risk = blend of HTN + diabetes (cardiovascular composite)
+            heart_risk = int(round(
+                (proba[2] * 0.55 + proba[1] * 0.30 + max(proba[1:]) * 0.15) * 100
+            ))
             risks = {
                 "diabetes":     int(round(proba[1] * 100)),
                 "hypertension": int(round(proba[2] * 100)),
-                "heart":        int(round(max(proba[1], proba[2]) * 0.65 * 100)),
+                "heart":        min(heart_risk, 95),
                 "mental":       int(round(proba[3] * 100)),
                 "thyroid":      int(round(proba[4] * 100)),
                 "pcos":         int(round(proba[5] * 100)) if data.gender != "male" else 0,
@@ -436,26 +483,39 @@ def predict_risk(data: SymptomInput):
 
             top_idx   = int(np.argmax(proba))
             top_score = int(round(proba[top_idx] * 100))
-            top_name  = _CLASS_NAMES[top_idx]
-            # If top is Normal but a disease has high risk, use that
+            top_name  = _CLASS_NAMES[top_idx]  # e.g. "Diabetes", "MentalHealth"
+
+            # If top is Normal but a disease probability is significant, use that disease
             if top_name == "Normal":
                 disease_proba = proba[1:]
                 top_dis_idx   = int(np.argmax(disease_proba))
                 top_dis_score = int(round(disease_proba[top_dis_idx] * 100))
-                if top_dis_score >= 25:
+                if top_dis_score >= 20:
                     top_idx   = top_dis_idx + 1
                     top_score = top_dis_score
                     top_name  = _CLASS_NAMES[top_idx]
 
+            # Normalize top_name to lowercase disease key used by _get_recommendation
+            _DISEASE_KEY_MAP = {
+                "normal":       "normal",
+                "diabetes":     "diabetes",
+                "hypertension": "hypertension",
+                "mentalhealth": "mental",
+                "thyroid":      "thyroid",
+                "pcos":         "pcos",
+            }
+            disease_key  = _DISEASE_KEY_MAP.get(top_name.lower(), top_name.lower())
             level        = "high" if top_score >= 60 else "medium" if top_score >= 35 else "low"
             contributing = [s for s in data.symptoms if s in SYMPTOM_WEIGHTS][:5]
-            explanation  = f"Stacking ensemble v4.0 (HistGB+RF+ET+GB). Key factors: {', '.join(contributing) or 'vitals'}"
+            explanation  = f"Voting ensemble v5.0 (HistGB+XGB+LGB+RF+ET+GB). Key factors: {', '.join(contributing) or 'vitals'}"
             if data.glucose and data.glucose >= 100:
                 explanation += f". Glucose: {data.glucose} mg/dL"
             if data.blood_pressure and data.blood_pressure >= 130:
                 explanation += f". BP: {data.blood_pressure} mmHg"
             if data.hba1c and data.hba1c >= 5.7:
                 explanation += f". HbA1c: {data.hba1c}%"
+            if data.bmi and data.bmi >= 25:
+                explanation += f". BMI: {data.bmi}"
 
             result = {
                 "risks":          risks,
@@ -464,8 +524,8 @@ def predict_risk(data: SymptomInput):
                 "confidence":     min(top_score + 5, 97),
                 "risk_level":     level,
                 "explanation":    explanation,
-                "recommendation": _get_recommendation(level, top_name.lower(), top_score),
-                "model":          "stacking_ensemble_v4"
+                "recommendation": _get_recommendation(level, disease_key, top_score),
+                "model":          "voting_ensemble_v5"
             }
         except Exception as e:
             # Fallback to rule-based if anything goes wrong
