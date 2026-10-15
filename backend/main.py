@@ -470,7 +470,33 @@ def predict_risk(data: SymptomInput):
             X_raw    = np.array([vec], dtype=np.float32)
             X_eng    = _engineer_features(X_raw)          # 34 → 46 features
             X_scaled = _scaler.transform(X_eng)            # StandardScaler fitted on 46 feats
-            proba    = _model.predict_proba(X_scaled)[0]   # shape (6,)
+            proba    = list(_model.predict_proba(X_scaled)[0])  # shape (6,)
+
+            # ── PCOS post-processing boost ──────────────────────────────────
+            # The model under-predicts PCOS when cardinal symptoms are present
+            # because PCOS training samples overlap with Normal/Thyroid.
+            # Rule: if female + irregular_periods OR acne → push PCOS above Normal.
+            if data.gender != "male":
+                has_irreg = "irregular_periods" in sym_set
+                has_acne  = "acne" in sym_set
+                has_wt    = "weight_gain" in sym_set
+                pcos_cardinal = (has_irreg or has_acne)
+                if pcos_cardinal:
+                    # Count how many PCOS signals present (0-3)
+                    pcos_signals = int(has_irreg) + int(has_acne) + int(has_wt)
+                    # Boost factor: 1 signal→×1.8, 2→×2.5, 3→×3.5
+                    boost = [1.8, 2.5, 3.5][pcos_signals - 1]
+                    proba[5] = min(proba[5] * boost, 0.95)
+                    # Redistribute remaining probability proportionally
+                    total_rest = sum(proba[:5])
+                    leftover   = 1.0 - proba[5]
+                    if total_rest > 0:
+                        scale = leftover / total_rest
+                        for i in range(5):
+                            proba[i] = proba[i] * scale
+            proba = np.array(proba, dtype=np.float64)
+            # re-normalise to ensure sum=1 after boost
+            proba = proba / proba.sum()
 
             # Map class probabilities to named risk scores
             # Classes: 0=Normal, 1=Diabetes, 2=Hypertension, 3=MentalHealth, 4=Thyroid, 5=PCOS
