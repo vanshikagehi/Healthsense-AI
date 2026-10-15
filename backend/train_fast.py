@@ -176,23 +176,8 @@ print("\n[4/5] Training single best model (fastest approach)...")
 
 t0 = time.time()
 
-if HAS_XGB:
-    model = XGBClassifier(
-        n_estimators=300,
-        learning_rate=0.08,
-        max_depth=7,
-        subsample=0.85,
-        colsample_bytree=0.85,
-        min_child_weight=3,
-        reg_alpha=0.05,
-        reg_lambda=1.0,
-        use_label_encoder=False,
-        eval_metric="mlogloss",
-        random_state=42,
-        n_jobs=-1,
-        verbosity=0
-    )
-    model_name = "XGBClassifier"
+if False:  # XGBoost skipped — version mismatch with Render deployment
+    pass
 elif HAS_LGB:
     model = LGBMClassifier(
         n_estimators=300,

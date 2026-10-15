@@ -1,9 +1,9 @@
 {
   "version": "5.1-fast",
-  "model_type": "XGBClassifier",
-  "accuracy": 98.43,
-  "cv_mean": 98.06,
-  "cv_std": 0.22,
+  "model_type": "LGBMClassifier",
+  "accuracy": 98.2,
+  "cv_mean": 97.95,
+  "cv_std": 0.17,
   "auc_roc_macro": 0.9994,
   "classes": [
     "Normal",
@@ -69,7 +69,7 @@
   ],
   "dataset_version": "v5.1-fast (20004 samples, 7 sub-types, 20% comorbidity)",
   "base_models": [
-    "XGBClassifier"
+    "LGBMClassifier"
   ],
-  "notes": "v5.1-fast: single XGBClassifier, 20K samples, 12 engineered features. ~5-10x faster than v5.0 6-model ensemble. Accuracy comparable on synthetic data."
+  "notes": "v5.1-fast: single LGBMClassifier, 20K samples, 12 engineered features. ~5-10x faster than v5.0 6-model ensemble. Accuracy comparable on synthetic data."
 }
