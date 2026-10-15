@@ -838,22 +838,38 @@
     document.getElementById('result-loading').style.display = 'none';
     document.getElementById('result-output').style.display = 'block';
 
+    // If backend returned top_disease use it directly, else derive from max risk
+    const apiData = risks._apiData || null;
     const allRisks = [risks.diabetes, risks.hypertension, risks.heart, risks.mental, risks.thyroid, gender==='male' ? 0 : risks.pcos];
     const allNames = ['Diabetes','Hypertension','Heart Risk','Mental Health','Thyroid Risk','PCOS Risk'];
     const topRisk  = Math.max(...allRisks);
-    const topName  = allNames[allRisks.indexOf(topRisk)];
-    const confidence = Math.min(topRisk + Math.floor(Math.random() * 6) + 2, 96);
 
-    // Confidence header
-    const isHigh = topRisk >= 60;
-    const isMed  = topRisk >= 35 && topRisk < 60;
-    document.getElementById('conf-icon').textContent = isHigh ? '⚠️' : isMed ? '📊' : '✅';
-    document.getElementById('conf-label').textContent = isHigh ? `High Risk: ${topName}` : isMed ? `Moderate Risk: ${topName}` : 'Low Risk — All Clear';
-    document.getElementById('conf-pct').textContent = confidence + '%';
-    document.getElementById('conf-badge').textContent = isHigh ? 'High' : isMed ? 'Medium' : 'Low';
-    document.getElementById('conf-badge').style.background = isHigh ? 'rgba(239,68,68,0.15)' : isMed ? 'rgba(245,158,11,0.15)' : 'rgba(0,212,180,0.15)';
-    document.getElementById('conf-badge').style.color = isHigh ? '#ef4444' : isMed ? '#f59e0b' : '#00d4b4';
-    document.getElementById('conf-badge').style.borderColor = isHigh ? 'rgba(239,68,68,0.3)' : isMed ? 'rgba(245,158,11,0.3)' : 'rgba(0,212,180,0.3)';
+    // Use backend top_disease if available and reliable
+    let topName;
+    if (apiData && apiData.top_disease && apiData.top_disease !== 'Normal') {
+      // Map backend class names to display names
+      const nameMap = { Diabetes:'Diabetes', Hypertension:'Hypertension', MentalHealth:'Mental Health', Thyroid:'Thyroid Risk', PCOS:'PCOS Risk' };
+      topName = nameMap[apiData.top_disease] || apiData.top_disease;
+    } else {
+      topName = topRisk > 0 ? allNames[allRisks.indexOf(topRisk)] : null;
+    }
+
+    // If all risks low and backend said Normal → truly low risk
+    const isNormal  = !topName || topRisk < 15;
+    const isHigh    = !isNormal && topRisk >= 60;
+    const isMed     = !isNormal && topRisk >= 30 && topRisk < 60;
+    const isLow     = !isNormal && topRisk < 30;
+    const confidence = apiData ? Math.min(apiData.confidence || topRisk + 3, 97)
+                                : Math.min(topRisk + 3, 96);
+
+    document.getElementById('conf-icon').textContent  = isNormal ? '✅' : isHigh ? '⚠️' : isMed ? '📊' : '🔵';
+    document.getElementById('conf-label').textContent = isNormal ? 'All Clear — Low Risk'
+      : isHigh ? `High Risk: ${topName}` : isMed ? `Moderate Risk: ${topName}` : `Low Risk: ${topName}`;
+    document.getElementById('conf-pct').textContent   = isNormal ? 'N/A' : confidence + '%';
+    document.getElementById('conf-badge').textContent = isNormal ? 'Normal' : isHigh ? 'High' : isMed ? 'Medium' : 'Low';
+    document.getElementById('conf-badge').style.background  = isNormal ? 'rgba(0,212,180,0.15)' : isHigh ? 'rgba(239,68,68,0.15)' : isMed ? 'rgba(245,158,11,0.15)' : 'rgba(79,142,247,0.15)';
+    document.getElementById('conf-badge').style.color       = isNormal ? '#00d4b4' : isHigh ? '#ef4444' : isMed ? '#f59e0b' : '#4f8ef7';
+    document.getElementById('conf-badge').style.borderColor = isNormal ? 'rgba(0,212,180,0.3)' : isHigh ? 'rgba(239,68,68,0.3)' : isMed ? 'rgba(245,158,11,0.3)' : 'rgba(79,142,247,0.3)';
 
     // 6-disease risk bars
     setTimeout(() => {
@@ -968,9 +984,16 @@
       'Thyroid Risk':  { spec:'Endocrinologist',    name:'Dr. Priya Sharma',  dist:'2.3km', rating:'4.8', fee:'₹500', time:'Tomorrow 2 PM' },
       'PCOS Risk':     { spec:'Gynecologist',       name:'Dr. Sunita Arora',  dist:'2.8km', rating:'4.9', fee:'₹700', time:'Tomorrow 10 AM' },
     };
-    const dr = doctorMap[topName] || doctorMap['Diabetes'];
-    const rec = isHigh
-      ? `<strong style="color:#ef4444;">⚠ High Risk Alert</strong> — ${topRisk}% ${topName} risk detected by Deep Learning engine.<br><br>
+    const dr = doctorMap[topName] || { spec:'General Physician', name:'Dr. Rakesh Gupta', dist:'1.5km', rating:'4.7', fee:'₹300', time:'Today 5 PM' };
+    const rec = isNormal
+      ? `<strong style="color:#00d4b4;">✅ Healthy Profile</strong> — ML model found no significant disease pattern.<br><br>
+         Add more symptoms or enter your vitals (glucose, BP, BMI) for a more detailed assessment.<br><br>
+         <strong>Agentic AI Tip:</strong><br>
+         ✦ Schedule annual wellness check-up<br>
+         ✦ Track vitals monthly<br>
+         <div style="margin-top:8px;font-size:12px;color:#00d4b4;">🤖 Shall I set a wellness reminder? <em>(One click approval)</em></div>`
+      : isHigh
+      ? `<strong style="color:#ef4444;">⚠ High Risk Alert</strong> — ${topRisk}% ${topName} risk detected by ML engine.<br><br>
          <strong>Recommended:</strong> Consult a ${dr.spec} within 48 hours.<br>
          <div style="margin-top:8px;padding:10px;background:rgba(79,142,247,0.08);border-radius:8px;border-left:3px solid #4f8ef7;">
            👨‍⚕️ <strong>${dr.name}</strong> · ${dr.spec}<br>
