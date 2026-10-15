@@ -3,9 +3,6 @@
 #  NEVER commit secrets, keys, or .env files!
 # ----------------------------------------------
 
-# -- Bob workspace artifacts (local only) --
-.bob/
-
 # -- Environment / Secrets — NEVER COMMIT --
 .env
 .env.local

@@ -522,10 +522,22 @@ def predict_risk(data: SymptomInput):
                 disease_proba = proba[1:]
                 top_dis_idx   = int(np.argmax(disease_proba))
                 top_dis_score = int(round(disease_proba[top_dis_idx] * 100))
-                if top_dis_score >= 20:
+                if top_dis_score >= 5:
                     top_idx   = top_dis_idx + 1
                     top_score = top_dis_score
                     top_name  = _CLASS_NAMES[top_idx]
+
+            # Blend ML risks with rule-based scores so UI always shows non-zero values
+            rule_result = calculate_risk(data)
+            rule_risks  = rule_result["risks"]
+            risks = {
+                "diabetes":     max(risks["diabetes"],     int(rule_risks.get("diabetes",0)     * 0.4)),
+                "hypertension": max(risks["hypertension"], int(rule_risks.get("hypertension",0) * 0.4)),
+                "heart":        max(risks["heart"],        int(rule_risks.get("heart",0)        * 0.4)),
+                "mental":       max(risks["mental"],       int(rule_risks.get("mental",0)       * 0.4)),
+                "thyroid":      max(risks["thyroid"],      int(rule_risks.get("thyroid",0)      * 0.4)),
+                "pcos":         max(risks["pcos"],         int(rule_risks.get("pcos",0)         * 0.4)) if data.gender != "male" else 0,
+            }
 
             # Normalize top_name to lowercase disease key used by _get_recommendation
             _DISEASE_KEY_MAP = {
