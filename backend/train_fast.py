@@ -1,7 +1,7 @@
 """
 HealthSense AI — Fast ML Engine v5.1
 =====================================
-Approach: Single best model (HistGradientBoostingClassifier fallback → XGBoost)
+Approach: Single best model (LightGBM, fallback → HistGradientBoostingClassifier)
           instead of 6-model voting ensemble.
 
 Why faster:
@@ -28,12 +28,6 @@ from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassif
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
 from sklearn.metrics import classification_report, accuracy_score, roc_auc_score
-
-try:
-    from xgboost import XGBClassifier
-    HAS_XGB = True
-except ImportError:
-    HAS_XGB = False
 
 try:
     from lightgbm import LGBMClassifier
@@ -170,15 +164,13 @@ print(f"      Train: {len(X_train):,} | Test: {len(X_test):,}")
 
 # ══════════════════════════════════════════════════════
 #   STEP 4 — PICK + TRAIN SINGLE BEST MODEL
-#   Priority: XGBoost > LightGBM > HistGBM > RandomForest
+#   Priority: LightGBM > HistGBM > RandomForest
 # ══════════════════════════════════════════════════════
 print("\n[4/5] Training single best model (fastest approach)...")
 
 t0 = time.time()
 
-if False:  # XGBoost skipped — version mismatch with Render deployment
-    pass
-elif HAS_LGB:
+if HAS_LGB:
     model = LGBMClassifier(
         n_estimators=300,
         learning_rate=0.08,

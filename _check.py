@@ -6,8 +6,8 @@ print('=== SYSTEM VALIDATION ===')
 
 # 1. Packages
 try:
-    import fastapi, uvicorn, pydantic, joblib, numpy, sklearn, xgboost, lightgbm
-    print('[OK] All packages importable: fastapi uvicorn pydantic joblib sklearn xgboost lightgbm')
+    import fastapi, uvicorn, pydantic, joblib, numpy, sklearn, lightgbm
+    print('[OK] All packages importable: fastapi uvicorn pydantic joblib sklearn lightgbm')
 except Exception as e:
     print('[FAIL] Import:', e)
 

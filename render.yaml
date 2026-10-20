@@ -14,7 +14,7 @@ services:
     name: healthsense-ai-backend
     runtime: python
     # Build: install deps + only train if model.pkl is missing (avoids 10-min timeout)
-    # model.pkl is pre-trained locally (XGBoost 98.43%) and committed via Git LFS
+    # model.pkl is pre-trained locally (LightGBM 98.20%) and committed via Git LFS
     # No training on Render = no OOM, fast startup
     buildCommand: pip install -r backend/requirements.txt
     startCommand: gunicorn backend.main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120

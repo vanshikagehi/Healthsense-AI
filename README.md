@@ -23,14 +23,14 @@ HealthSense AI is a full-stack health intelligence platform that combines a **pr
 
 ---
 
-## ML Model — v5.0 (Voting Ensemble)
+## ML Model — v5.1 (LightGBM)
 
 ### Architecture
-- **Model type**: Soft Voting Ensemble + Isotonic Calibration
-- **Base models**: HistGradientBoosting + XGBoost + LightGBM + RandomForest + ExtraTrees + GradientBoosting
-- **Training samples**: 50,004 (8,334 per class)
+- **Model type**: LightGBM Classifier
+- **Base models**: LightGBM (fallback: HistGradientBoosting)
+- **Training samples**: 20,004 (3,334 per class)
 - **Features**: 34 raw → 46 engineered features
-- **Accuracy**: 98.73%
+- **Accuracy**: 98.20%
 - **AUC-ROC (macro)**: 0.9996
 
 ### Feature Engineering (34 → 46)
@@ -197,7 +197,7 @@ python train_advanced.py
 
 ### Environment
 - Python 3.10+
-- Dependencies: `fastapi uvicorn scikit-learn xgboost lightgbm joblib numpy pydantic`
+- Dependencies: `fastapi uvicorn scikit-learn lightgbm joblib numpy pydantic`
 - Model file tracked via **Git LFS** (166 MB `.pkl`)
 
 ---
@@ -220,8 +220,8 @@ The backend is hardened against crashes:
 |-------|-----------|
 | Frontend | HTML5, CSS3, Vanilla JS |
 | Backend | FastAPI (Python) |
-| ML | scikit-learn, XGBoost, LightGBM |
-| Model | Soft Voting Ensemble + Isotonic Calibration |
+| ML | scikit-learn, LightGBM |
+| Model | LightGBM Classifier |
 | Deploy | Render.com (Blueprint) |
 | Model Storage | Git LFS |
 | API | REST + JSON |
